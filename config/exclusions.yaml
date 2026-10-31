@@ -1,0 +1,33 @@
+# Rows that must not be sent through generic albedo re-authoring even if a
+# catalogue label says otherwise.
+shadow_name_prefix: shadow
+blocked_categories:
+  - ui
+  - shadow
+  - text
+  - faces
+  - effects
+  - clothing
+  - cutout
+blocked_flags:
+  - atlas
+  - text
+  - cutout
+alpha_above: 0.02
+lod_tables:
+  1010016: 1010004
+  1010017: 1010004
+  1010019: 1010011
+  1010020: 1010011
+  1010021: 1010006
+  1010022: 1010006
+  1010023: 1010009
+  1010024: 1010009
+ui_tables:
+  - 1010008
+full_quality_tables:
+  - 1010004
+  - 1010006
+  - 1010008
+  - 1010009
+  - 1010011

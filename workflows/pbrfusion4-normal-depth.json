@@ -1,0 +1,35 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": "albedo.png"
+    }
+  },
+  "2": {
+    "class_type": "AIXPOLY_PBRFusion4SimpleDepthAndNormalGenerator",
+    "inputs": {
+      "image": ["1", 0],
+      "intensity_blend": 0.2,
+      "opengl_normal": true,
+      "optimize": false,
+      "bilateral_d": 10,
+      "bilateral_sigma_color": 50.0,
+      "bilateral_sigma_space": 50.0,
+      "scharr_scale_xy": 1.0
+    }
+  },
+  "3": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["2", 1],
+      "filename_prefix": "prk-depth"
+    }
+  },
+  "4": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": ["2", 2],
+      "filename_prefix": "prk-normal"
+    }
+  }
+}

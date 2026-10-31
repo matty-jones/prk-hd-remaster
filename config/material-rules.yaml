@@ -1,0 +1,74 @@
+# ORM and height policies. Roughness and metalness are material-class rules
+# refined by spatial analysis. They are not physically measured values.
+# Metalness is never taken from brightness.
+version: v1
+resolution:
+  terrain: 2048
+  stone: 2048
+  architecture: 2048
+  interior: 2048
+  metal: 2048
+  default: 1024
+metal_small_source_long_side: 1024
+metal_small_source_min_side: 128
+snap: 32
+bare_metal_tokens:
+  - steel
+  - chrome
+  - iron
+  - copper
+  - aluminum
+  - aluminium
+  - metallic
+  - grate
+painted_tokens:
+  - paint
+  - painted
+  - rust
+classes:
+  terrain:
+    roughness: 0.88
+    metallic: 0.0
+    metallic_mode: nonmetal
+    relief: 0.72
+    roughness_detail: 0.06
+  stone:
+    roughness: 0.82
+    metallic: 0.0
+    metallic_mode: nonmetal
+    relief: 0.85
+    roughness_detail: 0.05
+  architecture:
+    roughness: 0.78
+    metallic: 0.0
+    metallic_mode: nonmetal
+    relief: 0.62
+    roughness_detail: 0.05
+  interior:
+    roughness: 0.74
+    metallic: 0.0
+    metallic_mode: nonmetal
+    relief: 0.48
+    roughness_detail: 0.04
+  metal_painted:
+    roughness: 0.55
+    metallic: 0.04
+    metallic_mode: painted
+    allow_exposed: true
+    exposed_metallic: 0.72
+    relief: 0.38
+    roughness_detail: 0.08
+  metal_bare:
+    roughness: 0.38
+    metallic: 0.86
+    metallic_mode: bare
+    relief: 0.32
+    roughness_detail: 0.04
+  unknown:
+    roughness: 0.9
+    metallic: 0.0
+    metallic_mode: nonmetal
+    relief: 0.4
+    roughness_detail: 0.0
+ao_strength: 0.18
+ao_floor: 0.82

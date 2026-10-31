@@ -1,0 +1,43 @@
+version: v1
+# Positive instructions only. Qwen-Image-2.1-Turbo samples at CFG 1, so a
+# negative prompt is not part of the recipe.
+shared: |
+  Re-author the supplied original Anarchy Online texture as a premium modern-game albedo map.
+  Keep the identifiable palette, large feature placement, and material identity.
+  Invent convincing fine surface microstructure appropriate to the material.
+  Orthographic, straight-on, unlit, uniform exposure, diffuse albedo appearance.
+  No simulated directional lighting, no baked cast shadows, no photographic camera perspective.
+  No lettering, no added objects, no borders, no watermarks, no frame.
+  Output one albedo texture of the supplied surface, with no separate scene.
+categories:
+  terrain: |
+    This is a repeating ground or terrain surface ({name}, family {family}).
+    Keep the rock, soil, or vegetation type and the original arrangement.
+    Add mineral grain, weathering, granular scale variation, and fine surface detail.
+    The texture is a seamless periodic tile: opposite edges must continue the same surface.
+  stone: |
+    This is a repeating stone surface ({name}, family {family}).
+    Keep the rock type, fracture placement, and palette.
+    Add mineral grain, pitting, and fine crystalline detail.
+    The texture is a seamless periodic tile: opposite edges must continue the same stone.
+  architecture: |
+    This is a repeating architectural surface ({name}, family {family}).
+    Keep panel boundaries, coursing, and the original colour blocks in place.
+    Add believable material grain, wear, and fine surface variation.
+    The texture is a seamless periodic tile and must keep UV registration.
+  metal: |
+    This is a repeating metal or painted-metal surface ({name}, family {family}).
+    Faithfully retain the original panel pattern, colour blocks, boundaries, and markings.
+    Add micro-scratches, paint or metal grain, and physically plausible wear.
+    Straight-on diffuse albedo, without baked reflections or dramatic highlights.
+    The texture is a seamless periodic tile and must maintain UV registration.
+  interior: |
+    This is a repeating interior floor or trim ({name}, family {family}).
+    Keep the original pattern, joints, and palette.
+    Add fine material grain and subtle wear that stays consistent across the tile.
+    The texture is a seamless periodic tile: opposite edges must continue the same surface.
+default_category: |
+  This is a repeating game-material surface ({name}, family {family}).
+  Keep the original palette and feature placement.
+  Add fine physically plausible surface detail.
+  The texture is a seamless periodic tile.

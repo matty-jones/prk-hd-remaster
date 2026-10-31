@@ -1,0 +1,43 @@
+# Local paths. Generated art, weights, and the job database live on the data
+# volume. The PRK client database is only ever opened read-only.
+prk_root: ~/Games/Project-Rubi-Ka/client
+catalogue_csv: ~/Games/ao-vk/TEMP/texture-catalogue/assets.csv
+ao_vk_root: ~/Games/ao-vk
+work_root: /mnt/m/prk-hd-remaster
+
+comfy_url: http://127.0.0.1:8188
+comfy_host: 127.0.0.1
+comfy_port: 8188
+
+prompt_version: v1
+config_revision: v0.1.0
+stage_version: v0.1.0
+preset: aggressive
+cohort: first-1076
+
+# RTX 5080 16 GB profile. Cache stays in system RAM so the 7B generator and
+# the 8B encoder are not resident together with a full-precision KV cache.
+cache_device: cpu
+cache_dtype: int8
+# Encoder resolution 0 keeps the conditioning image's own size (already snapped
+# to a multiple of 32). Sampling uses that latent so the edit does not shift.
+qwen_resolution: 0
+pbr_optimize: false
+pbr_intensity_blend: 0.2
+pbr_bilateral_d: 10
+pbr_bilateral_sigma_color: 50
+pbr_bilateral_sigma_space: 50
+
+# Set by the synthetic bump probe after PBRFusion is installed. White is high.
+height_invert: false
+
+heartbeat_seconds: 20
+comfy_timeout_seconds: 1800
+gpu_concurrency: 1
+
+seam_retry_band: 8
+# A tileable material fails QA when the new seam is both above the catalogue
+# tile threshold and substantially worse than the source measurement.
+seam_fail_above: 2.2
+seam_worsen_ratio: 1.75
+seam_worsen_delta: 0.8
