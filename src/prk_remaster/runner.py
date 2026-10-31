@@ -157,6 +157,7 @@ def run_cohort(
     )
     if dry_run:
         return {"run_id": run_id, "jobs": jobs, "dry_run": True}
+    registry.update_run(run_id, status="running")
     if edit_fn is None:
         edit_fn, default_free = _default_edit(cfg)
         free_fn = free_fn or default_free
