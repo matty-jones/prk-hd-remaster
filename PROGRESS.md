@@ -27,4 +27,10 @@ Smoke on `1010004:5942` (run `20261031-132341-a2fa23`):
 
 ## Cohort
 
-The 1,076-texture run is the next step. Counts below are filled only from the registry after that run. In-game screenshots stay pending a user session. See `docs/OPERATIONS.md`.
+Run `20261031-132341-a2fa23` is in progress on the GPU. Resume it with:
+
+```
+uv run prk-remaster run --cohort first-1076 --preset aggressive --resume
+```
+
+Do not start a second run. As of 15:43 local on 31 October 2026 the registry had 257 generated, 1 qa_passed, and 818 still extracted. Qwen is the current stage. No job had failed. Counts after this line are written only when the run reaches a terminal status. In-game screenshots stay pending a user session. See `docs/OPERATIONS.md`.
