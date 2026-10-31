@@ -1,12 +1,10 @@
-# Exact weights for the v0.1 factory. SHA-256 values are filled after download
-# and then committed. The PBRFusion digest is the published blob hash.
 profile: rtx5080-16gb
 comfyui:
   repo: https://github.com/comfyanonymous/ComfyUI.git
-  revision: null
+  revision: 0dbfd493b4cc604db743c699f0f7ce01348e54a4
 pbr_nodes:
   repo: https://github.com/Night1099/COMFYUI-PBRFusion4.git
-  revision: null
+  revision: 70274b605dd168d8e655da9d9abd12439648d014
 qwen:
   repo: Comfy-Org/Qwen-Image-2.1
   license: Qwen Research License
@@ -16,22 +14,22 @@ qwen:
   steps: 8
   cfg: 1.0
   sampler: euler
-  # Official Turbo schedule from the ComfyUI image-edit template (8 steps).
   sigmas: "1.0, 0.978453, 0.95418, 0.926626, 0.89508, 0.845148, 0.704534, 0.414568, 0"
   files:
     diffusion:
       filename: qwen_image_2.1_turbo_int8_convrot.safetensors
       dest: diffusion_models
-      sha256: null
+      sha256: 8144a0182964aa8403ad6dbc011db837304167d235161b9aabaa8532e967314c
     text_encoder:
       filename: qwen3vl_8b_w4a8.safetensors
       dest: text_encoders
-      sha256: null
-      note: W4A8 encoder chosen so the 16 GB card and 31 GB system RAM can run the edit graph. The 9.35 GB INT8 encoder is the larger alternative.
+      sha256: 7754425e55e7bea2bfde4dde59a4cc236cb44e5ee9c215ea66ef8d47012824eb
+      note: W4A8 encoder chosen so the 16 GB card and 31 GB system RAM can run the
+        edit graph. The 9.35 GB INT8 encoder is the larger alternative.
     vae:
       filename: qwen_image_2.1_vae_bf16.safetensors
       dest: vae
-      sha256: null
+      sha256: bb21f7473051e1ac368515dd3f2e15cd44d7a11748ee8823e1ddca3e4876b7c9
 pbrfusion4:
   repo: NightRaven109/PBRFusion4
   license: Apache-2.0
@@ -40,11 +38,11 @@ pbrfusion4:
   sha256: 83c53a5566bc7c114f17fb15baac14cc6a1f7b40cd16f72a41da5aa43c065609
   opengl_normal: true
   provides:
-    - normal
-    - depth
+  - normal
+  - depth
   does_not_provide:
-    - learned albedo
-    - learned orm
+  - learned albedo
+  - learned orm
 diffusers_fallback:
   repo: Qwen/Qwen-Image-2.1-Turbo
   pipeline: QwenImage21Pipeline

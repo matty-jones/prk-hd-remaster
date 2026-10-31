@@ -2,13 +2,18 @@
 
 from __future__ import annotations
 
+import logging
+import subprocess
 import time
 import uuid
 from io import BytesIO
+from pathlib import Path
 from urllib.parse import urlparse
 
 import httpx
 from PIL import Image
+
+log = logging.getLogger("prk_remaster")
 
 
 class ComfyError(RuntimeError):
@@ -120,12 +125,76 @@ class ComfyClient:
             raise ComfyError("prompt finished without images")
         return images
 
-    def free(self) -> None:
+    def free(self, *, settle: bool = True, settle_below_mib: float = 4096, settle_timeout: float = 90) -> None:
+        """Ask ComfyUI to unload weights, then wait until that unload has happened.
+
+        ``/free`` only sets a queue flag. The worker applies it when the queue is
+        empty, so the next prompt must not be submitted until VRAM has dropped.
+        """
         with self._client() as client:
             response = client.post("/free", json={"unload_models": True, "free_memory": True})
             if response.status_code >= 400:
                 raise ComfyError(f"free failed: {response.status_code}")
+        if not settle:
+            return
+        # Other desktop clients share this GPU. Only the Comfy process has to drop.
+        used = _comfy_gpu_mib()
+        if used is None or used <= settle_below_mib:
+            return
+        deadline = time.monotonic() + settle_timeout
+        while time.monotonic() < deadline:
+            time.sleep(0.4)
+            used = _comfy_gpu_mib()
+            if used is not None and used <= settle_below_mib:
+                log.info("comfy unloaded models, process %.0f MiB", used)
+                return
+        log.warning("comfy process still %.0f MiB after /free", used or -1)
 
     def interrupt(self) -> None:
         with self._client() as client:
             client.post("/interrupt")
+
+
+def _comfy_pids() -> set[int]:
+    pids: set[int] = set()
+    proc = Path("/proc")
+    if not proc.is_dir():
+        return pids
+    for entry in proc.iterdir():
+        if not entry.name.isdigit():
+            continue
+        try:
+            command = (entry / "cmdline").read_bytes().replace(b"\x00", b" ").decode("utf-8", "replace")
+        except OSError:
+            continue
+        if "main.py" in command and "8188" in command:
+            pids.add(int(entry.name))
+    return pids
+
+
+def _comfy_gpu_mib() -> float | None:
+    """GPU memory held by the local ComfyUI process. Zero when it is off the device."""
+    pids = _comfy_pids()
+    if not pids:
+        return None
+    try:
+        output = subprocess.check_output(
+            ["nvidia-smi", "--query-compute-apps=pid,used_gpu_memory", "--format=csv,noheader,nounits"],
+            text=True,
+            timeout=5,
+        )
+    except (OSError, subprocess.SubprocessError):
+        return None
+    total = 0.0
+    for line in output.splitlines():
+        parts = [part.strip() for part in line.split(",")]
+        if len(parts) < 2:
+            continue
+        try:
+            pid = int(parts[0])
+            used = float(parts[1])
+        except ValueError:
+            continue
+        if pid in pids:
+            total += used
+    return total

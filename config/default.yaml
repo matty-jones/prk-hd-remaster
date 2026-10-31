@@ -22,7 +22,10 @@ cache_dtype: int8
 # Encoder resolution 0 keeps the conditioning image's own size (already snapped
 # to a multiple of 32). Sampling uses that latent so the edit does not shift.
 qwen_resolution: 0
-pbr_optimize: false
+# Full-resolution PBRFusion (optimize false) failed an allocation on this
+# 16 GB card. The node then runs at a 1024 long side and resizes back.
+# Those maps are labelled pbr-1024-upscaled. Albedo stays at the Qwen size.
+pbr_optimize: true
 pbr_intensity_blend: 0.2
 pbr_bilateral_d: 10
 pbr_bilateral_sigma_color: 50

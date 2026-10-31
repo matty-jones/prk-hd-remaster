@@ -9,14 +9,22 @@ Save point for the PRK HD remaster factory. Updated as the system is built and r
 - Catalogue: `/home/blasky/Games/ao-vk/TEMP/texture-catalogue/assets.csv` (20,859 rows). Cohort `risk=auto` is 1,076 textures: terrain 312, architecture 288, metal 186, interior 176, stone 114. `risk=skip` is 449 rows and stays in the import.
 - ao-vk checkout: `/home/blasky/Games/ao-vk` at `ab587fd30ec3384b36a1d1dd7f99615e2ad46578`. Pack layout is `<client>/randy-vk/packs/<name>/<type>_<id>_{d,n,h,orm}.png`. `order.txt` is first-match-wins. The client has `randy-vk/fx` and `randy-vk/portals` and no `packs/` directory yet.
 - GPU: NVIDIA GeForce RTX 5080, 16303 MiB, driver 615.78.08, capability 12.0. PyTorch 2.9.0+cu128 is installed on the system interpreter.
-- Disk: `/` has about 48 GB free. Work root is `/mnt/m/prk-hd-remaster` (about 211 GB free). No ComfyUI install and no Qwen-Image or PBRFusion weights were present at the start.
+- Disk: `/` has about 48 GB free. Work root is `/mnt/m/prk-hd-remaster`. ComfyUI, weights, the registry, and runs live there.
 
 ## Implementation
 
-The factory is a `uv` project, command `prk-remaster`. Stages are catalogue import, read-only RDB extract, Qwen edit through the official 8-step Turbo ComfyUI graph, PBRFusion normal/depth, rule-based ORM and height, QA, pack, and install. Tests use synthetic images.
+The factory is a `uv` project, command `prk-remaster`. Stages are catalogue import, read-only RDB extract, Qwen edit through the official 8-step Turbo ComfyUI graph, PBRFusion normal/depth, rule-based ORM and height, QA, pack, and install. Tests use synthetic images. `uv run pytest`: 14 passed.
 
-## Not done yet
+## Models
 
-- ComfyUI and the locked weights are not installed until `models setup` runs.
-- The 1,076-texture cohort has not been executed. Do not invent counts for it.
-- In-game screenshots are pending a user session. See `docs/OPERATIONS.md`.
+ComfyUI `0dbfd493` and PBRFusion nodes `70274b60` are installed under the work root. Doctor reports the GPU, the local Qwen research-license receipt, all four weight files, and the required nodes. Checksums are in `config/model-lock.yaml`. PBRFusion matches the published SHA-256.
+
+Smoke on `1010004:5942` (run `20261031-132341-a2fa23`):
+
+- Qwen edit 128 to 2048, label `qwen-native`, 94.9 s including load, peak 15786 MiB. Albedo SHA-256 `2d20a0e6cfb3145d543acf90fb493c4ba8343132382b91e40aa18d21dec2663a`. Seam 1.14 versus source seam 1.18.
+- Radial bump probe: depth is white-high, so `height_invert` is false.
+- PBRFusion at 2048 failed an allocation. The 1024 path succeeded in 3.8 s, peak 12557 MiB, labelled `pbr-1024-upscaled`. Job status `qa_passed`.
+
+## Cohort
+
+The 1,076-texture run is the next step. Counts below are filled only from the registry after that run. In-game screenshots stay pending a user session. See `docs/OPERATIONS.md`.

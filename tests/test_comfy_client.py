@@ -88,7 +88,7 @@ def test_mock_queue_round_trip():
         entry = client.wait(prompt_id, poll=0.01)
         result = client.download(client.result_images(entry)[0])
         assert result.size == (8, 8)
-        client.free()
+        client.free(settle=False)
     finally:
         server.shutdown()
         thread.join(timeout=2)

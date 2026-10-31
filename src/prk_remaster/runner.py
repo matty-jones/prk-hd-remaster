@@ -183,7 +183,7 @@ def run_cohort(
             free_fn()
         for job in registry.jobs(run_id):
             if job["status"] == "generated" and not job.get("canonical_key"):
-                _pbr_stage(registry, cfg, run_id, run_dir, job, pbr_fn, stats, measure_vram)
+                _pbr_stage(registry, cfg, run_id, run_dir, job, pbr_fn, stats, measure_vram, free_fn)
         if free_fn:
             free_fn()
         for job in registry.jobs(run_id):
@@ -258,7 +258,9 @@ def _generate(registry, cfg, run_id, run_dir, job, edit_fn, stats, measure_vram,
         _record(registry, run_id, key, "albedo_final", albedo)
         detail = dict(job.get("detail") or {})
         detail["cache_hit"] = True
-        detail["generation_label"] = detail.get("generation_label") or "qwen-cache"
+        label_file = cache_dir / "generation_label.txt"
+        stored = label_file.read_text(encoding="utf-8").strip() if label_file.is_file() else ""
+        detail["generation_label"] = stored or detail.get("generation_label") or "qwen-cache"
         registry.update_job(run_id, key, status="generated", stage="generate", detail=detail)
         registry.log_event(run_id, key, "generate_cache_hit")
         return
@@ -341,6 +343,7 @@ def _generate(registry, cfg, run_id, run_dir, job, edit_fn, stats, measure_vram,
         _record(registry, run_id, key, "albedo_final", albedo_path)
         cache_dir.mkdir(parents=True, exist_ok=True)
         atomic_save_png(final, cached)
+        (cache_dir / "generation_label.txt").write_text(label + "\n", encoding="utf-8")
         detail = dict(registry.job(run_id, key).get("detail") or {})
         detail["generation_label"] = label
         detail["generate_seconds"] = round(elapsed, 3)
@@ -353,22 +356,40 @@ def _generate(registry, cfg, run_id, run_dir, job, edit_fn, stats, measure_vram,
         return
 
 
-def _pbr_stage(registry, cfg, run_id, run_dir, job, pbr_fn, stats, measure_vram) -> None:
+def _pbr_stage(registry, cfg, run_id, run_dir, job, pbr_fn, stats, measure_vram, free_fn) -> None:
     key = job["asset_key"]
     directory = _asset_dir(run_dir, key)
     albedo = load_png(directory / "albedo_final.png").convert("RGB")
     shifted = circular_shift(albedo, albedo.size[0] // 2, albedo.size[1] // 2)
     registry.update_job(run_id, key, stage="pbr")
-    try:
-        (normal, depth), elapsed, peak = _call_with_vram(
-            lambda: pbr_fn(shifted, _settings(cfg)),
-            measure_vram,
-        )
-    except Exception as exc:  # noqa: BLE001
-        status = "blocked" if is_oom(exc) else "failed"
-        registry.update_job(run_id, key, status=status, rejection_reason=f"pbr: {exc}"[:500])
-        registry.log_event(run_id, key, "pbr_error", error=str(exc)[:500])
-        return
+    settings = _settings(cfg)
+    if stats.get("pbr_force_optimize"):
+        settings["pbr_optimize"] = True
+    normal = depth = None
+    elapsed = 0.0
+    peak = None
+    for attempt in range(2):
+        try:
+            (normal, depth), elapsed, peak = _call_with_vram(
+                lambda: pbr_fn(shifted, settings),
+                measure_vram,
+            )
+            break
+        except Exception as exc:  # noqa: BLE001
+            if is_oom(exc) and attempt == 0 and not settings.get("pbr_optimize"):
+                settings = dict(settings)
+                settings["pbr_optimize"] = True
+                stats["pbr_force_optimize"] = True
+                registry.log_event(run_id, key, "pbr_oom_retry", error=str(exc)[:300])
+                log.info("pbr oom %s; retrying at 1024", key)
+                if free_fn:
+                    free_fn()
+                continue
+            status = "blocked" if is_oom(exc) else "failed"
+            registry.update_job(run_id, key, status=status, rejection_reason=f"pbr: {exc}"[:500])
+            registry.log_event(run_id, key, "pbr_error", error=str(exc)[:500])
+            return
+    assert normal is not None and depth is not None
     stats["gpu_seconds"] += elapsed
     if peak:
         stats["peak_vram_mib"] = max(stats["peak_vram_mib"], peak)
@@ -397,6 +418,7 @@ def _pbr_stage(registry, cfg, run_id, run_dir, job, pbr_fn, stats, measure_vram)
         _record(registry, run_id, key, role, path)
     detail = dict(job.get("detail") or {})
     detail["pbr_seconds"] = round(elapsed, 3)
+    detail["pbr_label"] = "pbr-1024-upscaled" if settings.get("pbr_optimize") else "pbr-native"
     detail["orm_policy"] = maps["policy"].get("metallic_mode")
     detail["height_invert"] = bool(cfg.get("height_invert", False))
     registry.update_job(run_id, key, status="pbr", stage="pbr", detail=detail)
