@@ -22,6 +22,8 @@ Diffusers `QwenImage21Pipeline` on `Qwen/Qwen-Image-2.1-Turbo` is the fallback o
 
 Measured on the RTX 5080 (driver 615.78.08), ComfyUI `0dbfd493`, 31 October 2026. Catalogue texture `1010004:5942` (architecture, 128x128 source) edited to 2048x2048 in 94.9 seconds including model load. Label `qwen-native`. Peak `nvidia-smi` memory during that edit was 15786 MiB. Albedo SHA-256 `2d20a0e6cfb3145d543acf90fb493c4ba8343132382b91e40aa18d21dec2663a`. The graph executed, so the Diffusers fallback stays disabled.
 
+With DynamicVRAM left as ComfyUI ships it, the worker called `soft_empty_cache` after every prompt, and the next 2048 edit spent about 31 seconds staging weights again before the 2.6-second steps. `scripts/bootstrap-models.sh` changes that local ComfyUI checkout so the CUDA cache is dropped only when `/free` is requested. The Qwen pass can then keep the Turbo weights resident. The change is not in the ComfyUI git revision; re-running the bootstrap script reapplies it.
+
 ## PBRFusion 4
 
 Graph: [workflows/pbrfusion4-normal-depth.json](../workflows/pbrfusion4-normal-depth.json).

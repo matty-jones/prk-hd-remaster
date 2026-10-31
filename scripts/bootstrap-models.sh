@@ -30,5 +30,24 @@ if [[ -f "${NODE}/requirements.txt" ]]; then
   python -m pip install -r "${NODE}/requirements.txt"
 fi
 
+# Keep Turbo weights resident between prompts. /free still unloads them.
+python - "${COMFY}/main.py" <<'PY'
+import pathlib, sys
+path = pathlib.Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+marker = "prk-remaster: drop the CUDA cache only when /free asked for it."
+if marker not in text:
+    old = "                    gc.collect()\n                    comfy.model_management.soft_empty_cache()\n"
+    new = (
+        "                    gc.collect()\n"
+        "                    # prk-remaster: drop the CUDA cache only when /free asked for it.\n"
+        "                    if free_memory:\n"
+        "                        comfy.model_management.soft_empty_cache()\n"
+    )
+    if old not in text:
+        raise SystemExit(f"{path} does not contain the expected cache-clear block")
+    path.write_text(text.replace(old, new, 1), encoding="utf-8")
+PY
+
 echo "comfyui $(git -C "${COMFY}" rev-parse HEAD)"
 echo "pbrfusion-nodes $(git -C "${NODE}" rev-parse HEAD)"
