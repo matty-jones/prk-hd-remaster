@@ -129,7 +129,7 @@ def plan_jobs(
     jobs = []
     for asset in assets:
         existing = registry.job(run_id, asset["key"])
-        if existing and existing["status"] in {"qa_passed", "packed"} and not force:
+        if existing and existing["status"] in {"extracted", "generated", "pbr", "qa_passed", "packed"} and not force:
             jobs.append(existing)
             continue
         if existing and existing["status"] in {"failed", "blocked"} and not retry_failed and not force:

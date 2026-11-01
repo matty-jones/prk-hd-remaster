@@ -1,22 +1,50 @@
+# Local environment
 .venv/
+.env
+.env.*
+!.env.example
+
+# Python
 __pycache__/
 *.py[cod]
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 *.egg-info/
-dist/
+.coverage
+htmlcov/
 build/
+
+# Generated factory output. Weights, decoded art, packs, and the registry
+# live on the work volume and must not be committed.
 data/
 runs/
+dist/
+cache/
+logs/
+models/
+weights/
+receipts/
+install-receipts/
+license-acceptance.json
+comfy.pid
 *.sqlite
 *.sqlite-wal
 *.sqlite-shm
-license-acceptance.json
 *.safetensors
 *.ckpt
 *.gguf
-models/
-weights/
-.coverage
-htmlcov/
+*.pt
+*.pth
+*.bin
+*.zip
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.log
+
+# Editor and OS
+.DS_Store
+*~
+*.swp

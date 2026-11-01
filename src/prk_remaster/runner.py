@@ -264,6 +264,7 @@ def _generate(registry, cfg, run_id, run_dir, job, edit_fn, stats, measure_vram,
         detail["generation_label"] = stored or detail.get("generation_label") or "qwen-cache"
         registry.update_job(run_id, key, status="generated", stage="generate", detail=detail)
         registry.log_event(run_id, key, "generate_cache_hit")
+        log.info("cache hit %s %s", key, detail["generation_label"])
         return
     source = load_png(directory / "source.png").convert("RGB")
     for round_index in range(2):

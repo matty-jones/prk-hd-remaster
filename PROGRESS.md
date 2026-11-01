@@ -27,10 +27,6 @@ Smoke on `1010004:5942` (run `20261031-132341-a2fa23`):
 
 ## Cohort
 
-Run `20261031-132341-a2fa23` is in progress on the GPU. Resume it with:
+Run `20261031-132341-a2fa23` completed at 00:09 MST on 1 November 2026. All 1,076 jobs are `qa_passed`. None were rejected, blocked, or failed. Labels: 1,028 `qwen-native`, 48 `qwen-1024`, and 1,076 `pbr-1024-upscaled`. The resume session took 25,755 s wall, 21,037 s of GPU time, and peaked at 15,809 MiB.
 
-```
-uv run prk-remaster run --cohort first-1076 --preset aggressive --resume
-```
-
-Do not start a second run. As of 15:43 local on 31 October 2026 the registry had 257 generated, 1 qa_passed, and 818 still extracted. Qwen is the current stage. No job had failed. Counts after this line are written only when the run reaches a terminal status. In-game screenshots stay pending a user session. See `docs/OPERATIONS.md`.
+The pack, gallery, and install are not built yet. See `docs/OPERATIONS.md`. In-game screenshots stay pending a user session.

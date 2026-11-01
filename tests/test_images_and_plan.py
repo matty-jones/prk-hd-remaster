@@ -99,6 +99,11 @@ def test_planner_rejects_shadow_and_is_stable(tmp_path):
     assert by_key["1010006:1"]["seed"] == seed
     again = plan_jobs(registry, cfg, "run-a")
     assert {job["asset_key"]: job["seed"] for job in again} == {job["asset_key"]: job["seed"] for job in jobs}
+    registry.update_job("run-a", "1010006:1", status="generated", detail={"generation_label": "qwen-native"})
+    kept = plan_jobs(registry, cfg, "run-a")
+    kept_job = next(job for job in kept if job["asset_key"] == "1010006:1")
+    assert kept_job["status"] == "generated"
+    assert kept_job["detail"]["generation_label"] == "qwen-native"
     asset = registry.asset("1010006:9")
     assert rejection_reason(asset, cfg["exclusions"])
     assert target_size(64, 32, "terrain", cfg["material_rules"]) == (64, 32)
