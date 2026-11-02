@@ -38,3 +38,23 @@ Run `20261101-215758-d79815` (`prompt_version` v2, `config_revision` v0.2.0) rea
 Triage queued 6 regenerations, under the cap of 200. Two of those kept the new edit (`1010006:128`, `1010006:346`). The other four kept the anchored v1 image, including brock `1010006:215`, which is terrain rather than stone. Qwen2.5-VL-3B-Instruct is pinned in `config/model-lock.yaml` and cached by source SHA-256. A caption that contradicts a pixel grass reading is dropped. One caption survived, on `1010006:128`.
 
 PBRFusion and ORM were rerun from the corrected albedos. ORM uses `effective_material` when the filename and the pixels disagree. All 1,076 jobs are `packed`. Pack `dist/prk-hd-v02` has 1,168 files including aliases, is not zipped, and is not installed. Review sheets are `runs/20261101-215758-d79815/gallery/dramatic-triptych.png` and `worst-triptych.png`.
+
+## Semantic reconstruction (v3)
+
+v3 is a new run. It does not write into v1 (`20261031-132341-a2fa23`) or v2 (`20261101-215758-d79815`).
+
+Qwen-Image-2.1 drops the vision tokens and conditions on a VAE latent of the reference at the canvas size. Feeding a Lanczos upscale makes Turbo redraw that blur, and the v2 anchor then removes new edges. v3 sends an edge-preserving layout instead, names the microstructure in the prompt, and restores broad colour with a wide Lab lock that keeps the generated grain. Detail is scored at native resolution above the source Nyquist, not after a downsample to 256, and new grain is not required to match source pixels. PBRFusion stays at 1024; a detail normal from the albedo is blended on top (`pbr-1024-plus-detail`).
+
+The pass is resumable. A `STOP` file in the run directory, or SIGTERM, finishes the current texture. The resume command is in `runs/<v3-id>/RESUME.txt`. Native crops for the review set land in `runs/<v3-id>/gallery/crops/`. Pack output is `dist/prk-hd-v03` and is not installed over v1.
+
+Run `20261102-102535-4368ce` is the v3 cohort. The six review textures were generated first. Cable `1010004:20908` has braided strands in the original lanes and the bronze/brown of the source. Dirt `1010004:10946` and `1010004:44528` have granular soil instead of the v2 blur, with the source's brown. Grass `1010006:2` keeps the clump layout and the green; the blades are redrawn thicker than the v2 sharpen. The dark corroded wall `1010004:224626` and the panel wall `1010009:8544` keep their shapes and gain fine grain. Colour lock is lightness at 12px and chroma at 5px (`lock_version` 2).
+
+Resume, from the repo, with the project virtualenv active:
+
+```bash
+prk-remaster reconstruct --from-run 20261031-132341-a2fa23 --run 20261102-102535-4368ce --resume
+```
+
+To pause before a reboot, `touch /mnt/m/prk-hd-remaster/runs/20261102-102535-4368ce/STOP` and wait for the current texture to finish. Do not delete the run directory.
+
+The data volume has about 30 GB free. After the colour lock the raw edit and the structure reference are deleted, and the pack hardlinks its maps to the run instead of copying them. `depth_raw.png` and `preview_relit.png` are removed after QA. v1, v2, and both existing pack folders are left in place.

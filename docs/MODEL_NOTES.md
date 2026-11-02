@@ -48,6 +48,20 @@ The captioner is `Qwen/Qwen2.5-VL-3B-Instruct`, recorded under `captioner` in `c
 
 Run `20261101-215758-d79815` anchored all 1,076 v1 textures, regenerated 6, and kept 2 of those new edits. Pack `dist/prk-hd-v02` was built without a zip and without installing over `prk-hd-v01`.
 
+## Semantic reconstruction (v3)
+
+v1 and the v2 salvage stay on disk. `prk-remaster reconstruct` reads the v1 `source.png` files and writes a new run.
+
+The conditioning limit is in `TextEncodeQwenImage21`. The vision tokens are dropped and replaced by a VAE latent of the reference, and that latent is the same size as the empty canvas (`resolution` 0). v1 Lanczos-upscales the source to 1024 or 2048 first, so the latent contains the interpolation blur at every output cell. Turbo is sampled at CFG 1 from the published eight-step schedule, with no denoise control and no negative prompt, and it redraws that blur. The v2 anchor then deletes edges that do not already exist in the source. Tightening the anchor cannot invent the missing band.
+
+v3 does not use the v1 Qwen image as a donor. The reference passed to the same graph is an edge-preserving low-pass at the output size: lanes and panels stay aligned with the canvas, and frequencies finer than about one source texel are removed so the latent is not a fake answer. The prompt names the microstructure (braid, grains, blades) and says the reference blur is not the material. After the edit, lightness above about 12 pixels is taken from the source and the generated grain is kept. Chroma is locked more tightly, down to about 5 pixels, because a wide chroma blur left the edit's own hue on each strand and grain. There is no edge-agreement gate.
+
+Detail is measured at the output resolution, in the band above the source Nyquist. It is not resized to 256 first, and it is not required to correlate with the source pixels. Structure is still the coarse gradient correlation. Colour drift is delta E after a wide blur.
+
+PBRFusion still runs at a 1024 long side. The structural normal is then reoriented-blended with a normal taken from the albedo's own high-frequency luma, and the same field is added to the height. That grain exists at the albedo resolution even though PBRFusion never saw it. The label is `pbr-1024-plus-detail`.
+
+The raw edit is saved, colour-locked, then deleted so the cohort fits on the data volume. Resume skips a texture whose albedo is present and whose `lock_version` matches.
+
 ## What gets measured
 
 `doctor` and the run report record GPU name, driver, peak `nvidia-smi` memory, and wall time split from model inference time. Those numbers are written only after a real run. They are not estimated here.

@@ -16,6 +16,7 @@ from .quality import cie_lab
 
 _TOKEN = re.compile(r"[a-z0-9]+")
 _SIZE = re.compile(r"^\d+x\d+$")
+_TRAILING_SIZE = re.compile(r"\d+x\d+$")
 BANNED_CAPTION = (
     "photo", "photograph", "scene", "landscape", "camera", "person", "character",
     "portrait", "room interior", "factory floor", "building exterior",
@@ -35,7 +36,10 @@ def tokenize(name: str) -> list[str]:
     for token in _TOKEN.findall(text):
         if _SIZE.match(token) or token.isdigit():
             continue
-        tokens.append(token)
+        peeled = _TRAILING_SIZE.sub("", token)
+        if not peeled or peeled.isdigit():
+            continue
+        tokens.append(peeled)
     return tokens
 
 
@@ -346,9 +350,25 @@ def apply_caption(brief: dict, caption: dict | None) -> dict:
     return updated
 
 
-def compile_prompt(asset: dict, brief: dict, prompts: dict, target_w: int, target_h: int) -> str:
+def apply_v3_detail(brief: dict, prompts: dict) -> dict:
+    """Use the v3 microstructure line for a known subject. The filename subject stays."""
+    table = prompts.get("v3_detail") or {}
+    text = str(table.get(brief.get("subject_class") or "") or "").strip()
+    updated = dict(brief)
+    setting = str(brief.get("setting") or "")
+    subject = str(brief.get("subject") or "")
+    if setting and subject.endswith(setting):
+        subject = subject[: -(len(setting))].removesuffix(" on ").strip()
+        updated["subject"] = subject
+    if not text:
+        return updated if updated.get("subject") != brief.get("subject") else brief
+    updated["enhance"] = text
+    return updated
+
+
+def compile_prompt(asset: dict, brief: dict, prompts: dict, target_w: int, target_h: int, version: str = "v2") -> str:
     """Positive-only prompt. CFG 1 drops a negative prompt, so restrictions are phrased as what to keep."""
-    block = prompts.get("v2") or {}
+    block = prompts.get(version) or prompts.get("v2") or {}
     shared = (block.get("shared") or "").strip()
     uncertain = float(brief.get("name_confidence") or 0) < 0.35 or not brief.get("subject")
     body = (block.get("uncertain") if uncertain else block.get("certain")) or ""

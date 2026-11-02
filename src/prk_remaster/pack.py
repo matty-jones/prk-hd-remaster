@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import zipfile
 from pathlib import Path
@@ -25,9 +26,14 @@ def map_filename(rdb_type: int, rdb_id: int, suffix: str) -> str:
 
 def _copy_map(src: Path, dest: Path) -> None:
     dest.parent.mkdir(parents=True, exist_ok=True)
-    temporary = dest.with_name(dest.name + ".tmp")
-    shutil.copyfile(src, temporary)
-    temporary.replace(dest)
+    if dest.exists():
+        dest.unlink()
+    try:
+        os.link(src, dest)
+    except OSError:
+        temporary = dest.with_name(dest.name + ".tmp")
+        shutil.copyfile(src, temporary)
+        temporary.replace(dest)
 
 
 def build_pack(registry: Registry, run_id: str, dest: Path, name: str, *, archive: bool = True) -> dict:

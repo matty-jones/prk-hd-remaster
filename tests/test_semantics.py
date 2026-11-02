@@ -2,7 +2,7 @@ from PIL import Image
 
 from prk_remaster.config import load_config
 from prk_remaster.pbr import policy_for
-from prk_remaster.semantics import apply_caption, build_brief, compile_prompt, sanitize_caption
+from prk_remaster.semantics import apply_caption, apply_v3_detail, build_brief, compile_prompt, sanitize_caption
 
 
 def _cfg():
@@ -30,6 +30,36 @@ def test_cable_prompt_describes_cables_and_not_a_factory_scene():
     assert "photograph" not in lowered
     rules = cfg["material_rules"]
     assert policy_for(asset["name"], brief["effective_material"], rules)["metallic_mode"] == "bare"
+
+
+def test_v3_prompt_asks_for_braid_and_treats_the_reference_as_layout():
+    cfg = _cfg()
+    image = Image.new("RGB", (32, 64), (120, 90, 40))
+    asset = {
+        "name": "dock_factory_metal_cable.png",
+        "family": "dock_factory",
+        "material_class": "metal",
+        "source_width": 32,
+        "source_height": 64,
+    }
+    brief = apply_v3_detail(build_brief(asset, image, cfg["name_lexicon"]), cfg["family_prompts"])
+    text = compile_prompt(asset, brief, cfg["family_prompts"], 512, 1024, version="v3").lower()
+    assert "layout reference" in text
+    assert "braid" in text
+    assert "strand" in text
+    assert "does not copy the reference blur" in text
+    assert "dock fitting" not in text
+
+
+def test_v3_dirt_prompt_asks_for_hard_grains():
+    cfg = _cfg()
+    image = Image.new("RGB", (32, 32), (90, 70, 40))
+    asset = {"name": "std-dirt32x32.png", "family": "std_dirt", "material_class": "terrain", "source_width": 32, "source_height": 32}
+    brief = apply_v3_detail(build_brief(asset, image, cfg["name_lexicon"]), cfg["family_prompts"])
+    text = compile_prompt(asset, brief, cfg["family_prompts"], 2048, 2048, version="v3").lower()
+    assert brief["subject_class"] == "dirt"
+    assert "grain" in text
+    assert "not a soft blur" in text
 
 
 def test_brock_green_image_is_not_described_as_stone():

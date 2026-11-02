@@ -253,6 +253,51 @@ def fidelity_report(source: Image.Image, albedo: Image.Image, donor: Image.Image
     }
 
 
+def _band_energy(image: Image.Image, sigma: float) -> float:
+    """Mean square high-pass of luma at this image's own resolution."""
+    import numpy as np
+    luma = _luma_np(image)
+    plane = luma - wrap_blur(luma, sigma)
+    return float(np.mean(plane ** 2))
+
+
+def _coarse_delta_e(source: Image.Image, albedo: Image.Image, sigma: float) -> float:
+    """Delta E after a wide blur, so grain does not count as a palette change."""
+    import numpy as np
+    source = source.convert("RGB").resize(albedo.size, Image.Resampling.LANCZOS)
+    def low(image: Image.Image) -> "np.ndarray":
+        blurred = wrap_blur(_rgb_array(image), sigma)
+        small = Image.fromarray(np.clip(np.rint(blurred), 0, 255).astype(np.uint8), "RGB")
+        small = small.resize((48, 48), Image.Resampling.BOX)
+        return cie_lab(small)
+    delta = low(source) - low(albedo)
+    return float(np.mean(np.linalg.norm(delta, axis=-1)))
+
+
+def native_fidelity(source: Image.Image, albedo: Image.Image) -> dict:
+    """Coarse structure, broad colour, and detail the source resolution cannot contain.
+
+    The detail band is measured at the albedo's own size. It is not resized to 256,
+    and it is not required to line up with the source pixels.
+    """
+    scale = max(albedo.size) / max(max(source.size), 1)
+    sigma = max(1.15, 0.55 * scale)
+    lanczos = source.convert("RGB").resize(albedo.size, Image.Resampling.LANCZOS)
+    new_band = _band_energy(albedo, sigma)
+    source_band = _band_energy(lanczos, sigma)
+    colour_sigma = float(min(48.0, max(8.0, scale * 3.0)))
+    return {
+        "structure": round(structure_agreement(source, albedo), 4),
+        "coarse_delta_e": round(_coarse_delta_e(source, albedo, colour_sigma), 3),
+        "native_detail": round(new_band, 3),
+        "source_band": round(source_band, 3),
+        "detail_gain": round(new_band / max(source_band, 1e-3), 3),
+        "fine_energy": round(_band_energy(albedo, 1.25), 3),
+        "source_fine": round(_band_energy(lanczos, 1.25), 3),
+        "band_sigma": round(sigma, 3),
+    }
+
+
 def decide_route(metrics: dict, brief: dict, fidelity: dict | None = None) -> str:
     """Anchor when the donor still depicts the source. Regenerate when the material or the subject is wrong."""
     fidelity = fidelity or {}

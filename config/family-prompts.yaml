@@ -59,3 +59,37 @@ v2:
     Keep {hold}.
     Add fine grain of that same visible material.
     Even diffuse colour across the tile, with the supplied image as the layout reference.
+v3:
+  shared: |
+    Reconstruct the supplied game texture as a sharp high-resolution albedo.
+    The supplied image is a soft layout reference. Its fine pixels are compression, not material.
+    Keep the large shapes, their positions, the repeat, and the broad colour regions.
+    Invent sharp intermediate and fine surface detail that the low-resolution source could not store.
+    Orthographic, straight-on, unlit, uniform exposure, diffuse albedo.
+    One seamless surface. Opposite edges continue the same material.
+    No text, no extra objects, no border, no frame.
+  certain: |
+    The material is {subject} ({name}, family {family}).
+    Broad appearance to keep: {appearance}.
+    Hold in place: {hold}.
+    Fill the surface with this new detail: {enhance}.
+    That detail is sharper than the reference and does not copy the reference blur.
+  uncertain: |
+    Follow the surface already visible ({name}, family {family}).
+    Broad appearance to keep: {appearance}.
+    Hold in place: {hold}.
+    Fill that same material with sharp fine grain. Do not invent a new object or move the layout.
+    That grain is sharper than the reference and does not copy the reference blur.
+v3_detail:
+  cable: tight braided sheath and separate twisted strands running along every existing cable lane
+  wire: separate twisted strands along each existing wire
+  chain: individual links and edge wear on the existing chain
+  rope: twisted fibres inside the existing rope
+  dirt: sharp mineral grains, grit, and hard-edged soil crumbs, not a soft blur
+  sand: distinct sand grains and small pebbles, not a soft blur
+  grass: finer blades in the existing clumps, in the same green
+  vegetation: finer blades in the existing clumps, in the same green
+  wall: the existing pits, stains, and panel edges, with finer grain inside those shapes
+  stone: mineral grain and pits inside the existing fractures
+  wood: sharp grain lines that follow the existing boards
+  brick: clay grain and grit in the existing mortar lines

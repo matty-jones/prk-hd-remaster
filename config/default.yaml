@@ -57,3 +57,11 @@ fidelity:
   structure_retry_below: 0.72
   delta_e_retry_above: 18
   review_structure_below: 0.60
+
+# Semantic reconstruction. A separate run from v1 and from the v2 salvage.
+# The reference image is a layout, not a pixel donor. Colour is locked afterwards.
+reconstruct:
+  prompt_version: v3
+  config_revision: v0.3.0
+  stage_version: v0.3.0
+  pack_name: prk-hd-v03

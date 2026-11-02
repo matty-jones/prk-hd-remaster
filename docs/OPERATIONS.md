@@ -18,6 +18,12 @@ uv run prk-remaster pack build --run latest --name prk-hd-v01
 
 `run` is resumable. A crashed ComfyUI process or an interrupted Python process leaves each texture at its last finished stage (`pending`, `extracted`, `generated`, `pbr`, `qa_passed`). Run the same command again. `--retry-failed` requeues `failed` and `blocked` jobs. `--force` is required to replace a finished result with a different recipe.
 
+`reconstruct` is the v3 semantic pass. It writes a new run and does not modify the v1 run or the v2 salvage run. A `STOP` file in the run directory, or SIGTERM, finishes the current texture and returns. Resume with the command in that run's `RESUME.txt`:
+
+```bash
+uv run prk-remaster reconstruct --from-run <v1-run-id> --run <v3-run-id> --resume
+```
+
 `--limit 1` checks that a real image comes back. It is not the production cohort.
 
 Useful filters: `--family ground:sand`, `--types 1010006`, `--ids-file ids.txt` (one `type:id` per line).

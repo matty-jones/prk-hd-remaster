@@ -221,6 +221,46 @@ def write_gallery(registry: Registry, run_id: str, run_dir: Path, dest: Path | N
     return index
 
 
+def write_crop_strip(panels: list[tuple[str, Image.Image]], dest: Path, caption: str) -> Path:
+    """Place native-resolution crops side by side. The crops are not resized."""
+    from PIL import ImageDraw
+    dest = Path(dest)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if not panels:
+        image = Image.new("RGB", (320, 48), (16, 16, 16))
+        atomic_save_png(image, dest)
+        return dest
+    gap = 8
+    header = 40
+    width = gap + sum(panel.size[0] + gap for _label, panel in panels)
+    height = header + max(panel.size[1] for _label, panel in panels) + gap
+    sheet = Image.new("RGB", (width, height), (12, 12, 12))
+    draw = ImageDraw.Draw(sheet)
+    font = _sheet_font(15)
+    draw.text((gap, 8), caption[:200], fill=(235, 235, 235), font=font)
+    left = gap
+    for label, panel in panels:
+        draw.text((left, header - 18), label, fill=(190, 190, 190), font=_sheet_font(13))
+        sheet.paste(panel.convert("RGB"), (left, header))
+        left += panel.size[0] + gap
+    atomic_save_png(sheet, dest)
+    return dest
+
+
+# Reviewed first, and generated first, so a pause still leaves the comparison crops.
+PRIORITY_KEYS = (
+    "1010004:20908",
+    "1010004:10946",
+    "1010004:44528",
+    "1010004:9881",
+    "1010006:2",
+    "1010004:224626",
+    "1010009:8544",
+    "1010009:9691",
+    "1010009:95482",
+    "1010006:215",
+)
+
 DRAMATIC_KEYS = (
     "1010004:10946",
     "1010004:44528",

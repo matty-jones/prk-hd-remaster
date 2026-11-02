@@ -20,6 +20,7 @@ from .planner import dumps_plan, load_ids, plan_jobs
 from .registry import Registry
 from .report import write_report
 from .runner import run_cohort
+from .reconstruct import run_reconstruct
 from .salvage import run_salvage
 
 
@@ -139,6 +140,30 @@ def cmd_salvage(args) -> int:
         force=args.force,
         resume=args.resume,
         regen_cap=args.regen_cap,
+        pack_name=args.pack_name,
+    )
+    sys.stdout.write(json.dumps(result, indent=2) + "\n")
+    return 0
+
+
+def cmd_reconstruct(args) -> int:
+    cfg = _config(args)
+    paths = ensure_work_dirs(cfg)
+    registry = Registry(paths["registry"])
+    keys = None
+    if args.keys:
+        keys = {item.strip() for item in args.keys.split(",") if item.strip()}
+    if args.ids_file:
+        keys = load_ids(args.ids_file)
+    result = run_reconstruct(
+        cfg, registry,
+        from_run=args.from_run,
+        run_id=None if args.run in (None, "", "latest") else args.run,
+        keys=keys,
+        stop_after=args.stop_after,
+        force=args.force,
+        resume=args.resume,
+        limit=args.limit,
         pack_name=args.pack_name,
     )
     sys.stdout.write(json.dumps(result, indent=2) + "\n")
@@ -286,6 +311,20 @@ def build_parser() -> argparse.ArgumentParser:
     salvage_p.add_argument("--comfy-url")
     salvage_p.add_argument("--prk-root")
     salvage_p.set_defaults(func=cmd_salvage)
+
+    reconstruct_p = sub.add_parser("reconstruct")
+    reconstruct_p.add_argument("--from-run", required=True)
+    reconstruct_p.add_argument("--run", default="latest")
+    reconstruct_p.add_argument("--keys", help="Comma-separated asset keys")
+    reconstruct_p.add_argument("--ids-file")
+    reconstruct_p.add_argument("--stop-after", default="pack", choices=("generate", "pbr", "pack"))
+    reconstruct_p.add_argument("--force", action="store_true")
+    reconstruct_p.add_argument("--resume", action="store_true")
+    reconstruct_p.add_argument("--limit", type=int)
+    reconstruct_p.add_argument("--pack-name")
+    reconstruct_p.add_argument("--comfy-url")
+    reconstruct_p.add_argument("--prk-root")
+    reconstruct_p.set_defaults(func=cmd_reconstruct)
 
     for name, func in (("status", cmd_status), ("gallery", cmd_gallery), ("report", cmd_report)):
         item = sub.add_parser(name)

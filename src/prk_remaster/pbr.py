@@ -149,6 +149,80 @@ def synthetic_bump(size: int = 64) -> Image.Image:
     return Image.fromarray(rgb)
 
 
+def _rnm(base: np.ndarray, detail: np.ndarray) -> np.ndarray:
+    """Reoriented normal blend. A flat detail leaves the base unchanged."""
+    t = base + np.array([0.0, 0.0, 1.0], dtype=np.float32)
+    u = detail * np.array([-1.0, -1.0, 1.0], dtype=np.float32)
+    dot = np.sum(t * u, axis=-1, keepdims=True)
+    blended = t * dot / np.clip(t[..., 2:3], 1e-4, None) - u
+    length = np.linalg.norm(blended, axis=-1, keepdims=True)
+    return blended / np.clip(length, 1e-6, None)
+
+
+def _encode_normal(vectors: np.ndarray) -> Image.Image:
+    encoded = np.clip(np.rint((vectors * 0.5 + 0.5) * 255.0), 0, 255).astype(np.uint8)
+    return Image.fromarray(encoded)
+
+
+def _decode_normal(image: Image.Image) -> np.ndarray:
+    array = np.asarray(image.convert("RGB"), dtype=np.float32) / 255.0 * 2.0 - 1.0
+    length = np.linalg.norm(array, axis=-1, keepdims=True)
+    return array / np.clip(length, 1e-6, None)
+
+
+def _relief_field(albedo: Image.Image) -> np.ndarray:
+    """Luma variation finer than the 1024 PBRFusion pass can represent, periodic."""
+    from .tiles import wrap_blur
+    luma = np.asarray(albedo.convert("L"), dtype=np.float32)
+    fine = luma - wrap_blur(luma, 1.35)
+    mid = wrap_blur(luma, 1.35) - wrap_blur(luma, 4.0)
+    return fine * 0.65 + mid * 0.45
+
+
+def blend_detail_normal(normal: Image.Image, albedo: Image.Image, weight: float) -> Image.Image:
+    """Add native-resolution albedo grain to a structural normal. Weight 0 keeps the input."""
+    field = _relief_field(albedo)
+    scale = float(np.percentile(np.abs(field), 95)) + 1e-3
+    field = field / scale
+    # Adjacent difference. A two-pixel step is invisible to a radius-1 central difference.
+    dx = np.roll(field, -1, axis=1) - field
+    dy = np.roll(field, -1, axis=0) - field
+    gain = 0.55 * float(np.clip(weight, 0.0, 1.0))
+    nx = -dx * gain
+    ny = -dy * gain
+    nz = np.ones_like(nx)
+    length = np.sqrt(nx * nx + ny * ny + nz * nz)
+    detail = np.stack([nx / length, ny / length, nz / length], axis=-1).astype(np.float32)
+    if normal.size != albedo.size:
+        normal = resize_normal(normal, albedo.size)
+    blended = _rnm(_decode_normal(normal), detail)
+    return _encode_normal(blended)
+
+
+def stamp_detail_height(height: Image.Image, albedo: Image.Image, weight: float) -> Image.Image:
+    """Add the same fine relief to the height map so it matches the detail normal."""
+    field = _relief_field(albedo)
+    scale = float(np.percentile(np.abs(field), 95)) + 1e-3
+    field = np.clip(field / scale, -1.0, 1.0)
+    if height.size != albedo.size:
+        height = height.resize(albedo.size, Image.Resampling.BILINEAR)
+    base = np.asarray(height.convert("L"), dtype=np.float32)
+    amp = 22.0 * float(np.clip(weight, 0.0, 1.0))
+    stamped = np.clip(np.rint(base + field * amp), 0, 255).astype(np.uint8)
+    return Image.fromarray(stamped, "L")
+
+
+def detail_weight(subject_class: str, kind: str) -> float:
+    """How much native grain to fold into the 1024 structural normal."""
+    if subject_class in {"cable", "wire", "chain", "rope", "dirt", "sand", "grass", "vegetation"}:
+        return 0.85
+    if kind == "graphic":
+        return 0.28
+    if kind == "organic":
+        return 0.70
+    return 0.62
+
+
 def depth_is_white_high(depth: Image.Image) -> bool:
     """True when the centre of a radial bump is brighter than the corners."""
     array = np.asarray(depth.convert("L"), dtype=np.float32)
