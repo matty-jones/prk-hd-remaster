@@ -26,6 +26,7 @@ input, select { background: #111; color: #eee; border: 1px solid #444; padding: 
 .card { background: #242424; padding: 8px; }
 .card img { width: 100%; height: auto; background: #111; cursor: zoom-in; }
 .card h3 { font-size: 13px; margin: 6px 0; }
+.card button, #pager button { background: #333; color: #eee; border: 1px solid #555; margin: 2px 4px 2px 0; padding: 2px 6px; cursor: pointer; }
 .meta { color: #aaa; font-size: 12px; }
 #viewer { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.88); overflow: auto; padding: 24px; }
 #viewer img { max-width: 100%; }
@@ -40,6 +41,7 @@ input, select { background: #111; color: #eee; border: 1px solid #444; padding: 
     <input id="q" placeholder="family, id, category" size="32">
     <select id="status"><option value="">any status</option></select>
     <select id="category"><option value="">any category</option></select>
+    <span id="pager"><button type="button" id="prev">Previous</button><span id="pageinfo"></span><button type="button" id="next">Next</button></span>
   </p>
   <p class="meta">In-game screenshots belong in in-game-evidence/. Capture steps are in CAPTURE.md next to this file.</p>
 </header>
@@ -63,26 +65,44 @@ const categories = [...new Set(DATA.assets.map(a => a.category))].sort();
 for (const value of statuses) statusEl.append(new Option(value, value));
 for (const value of categories) categoryEl.append(new Option(value, value));
 document.getElementById("run").textContent = DATA.run_id;
+const PAGE = 12;
+let page = 0;
+let rows = DATA.assets;
 function thumb(asset, role) {
   const file = asset.files[role];
   if (!file) return "";
   return `<img data-full="${file}" src="${file}" alt="${role}">`;
 }
-function render() {
+function extra(asset, role, label) {
+  const file = asset.files[role];
+  if (!file) return "";
+  return `<button type="button" data-full="${file}">${label}</button>`;
+}
+function applyFilter() {
   const q = document.getElementById("q").value.toLowerCase();
   const st = statusEl.value;
   const cat = categoryEl.value;
-  const rows = DATA.assets.filter(a => {
+  rows = DATA.assets.filter(a => {
     if (st && a.status !== st) return false;
     if (cat && a.category !== cat) return false;
     if (!q) return true;
     return (a.key + " " + a.family + " " + a.name + " " + a.category).toLowerCase().includes(q);
   });
-  gridEl.innerHTML = rows.map(a => `
+  page = 0;
+  render();
+}
+function render() {
+  const pages = Math.max(1, Math.ceil(rows.length / PAGE));
+  if (page < 0) page = 0;
+  if (page >= pages) page = pages - 1;
+  const slice = rows.slice(page * PAGE, page * PAGE + PAGE);
+  document.getElementById("pageinfo").textContent = ` page ${page + 1} of ${pages} · ${rows.length} matches `;
+  gridEl.innerHTML = slice.map(a => `
     <article class="card">
       <h3>${a.key} · ${a.status}</h3>
       <div class="meta">${a.category} / ${a.family || "no family"} / ${a.name || "unnamed"} / ${a.target}</div>
-      ${thumb(a, "source")}${thumb(a, "albedo")}${thumb(a, "normal")}${thumb(a, "height")}${thumb(a, "roughness")}${thumb(a, "tile")}${thumb(a, "relit")}
+      ${thumb(a, "source")}${thumb(a, "albedo")}
+      <p>${extra(a, "normal", "normal")}${extra(a, "height", "height")}${extra(a, "roughness", "roughness")}${extra(a, "tile", "3x3")}${extra(a, "relit", "relit")}</p>
       <p class="meta">${a.reason || ""}</p>
     </article>`).join("");
   const families = {};
@@ -90,15 +110,18 @@ function render() {
     const key = a.family || "(single)";
     (families[key] = families[key] || []).push(a);
   });
-  familiesEl.innerHTML = "<h2>Families</h2>" + Object.keys(families).sort().map(name => {
+  const names = Object.keys(families).sort();
+  familiesEl.innerHTML = `<h2>Families (${names.length})</h2>` + names.slice(0, 40).map(name => {
     const group = families[name];
     const hero = group.find(a => a.status === "qa_passed" || a.status === "packed") || group[0];
     return `<p><strong>${name}</strong> ${group.length} · hero ${hero.key} ${hero.status}</p>`;
-  }).join("");
+  }).join("") + (names.length > 40 ? "<p class='meta'>Filter to see the other families.</p>" : "");
 }
-document.getElementById("q").addEventListener("input", render);
-statusEl.addEventListener("change", render);
-categoryEl.addEventListener("change", render);
+document.getElementById("q").addEventListener("input", applyFilter);
+statusEl.addEventListener("change", applyFilter);
+categoryEl.addEventListener("change", applyFilter);
+document.getElementById("prev").addEventListener("click", () => { page -= 1; render(); });
+document.getElementById("next").addEventListener("click", () => { page += 1; render(); });
 gridEl.addEventListener("click", event => {
   const full = event.target.getAttribute && event.target.getAttribute("data-full");
   if (!full) return;
