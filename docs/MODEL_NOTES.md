@@ -36,6 +36,18 @@ Graph: [workflows/pbrfusion4-normal-depth.json](../workflows/pbrfusion4-normal-d
 - Full-resolution inference on the 2048 albedo failed with a CUDA allocation error while the Comfy process was already down to about 2940 MiB. The same albedo then passed at the node's 1024 long side in 3.8 seconds, peak 12557 MiB, and the node resized the maps back to 2048. That result is labelled `pbr-1024-upscaled`. `pbr_optimize` is therefore true for this machine. A later job in the same process skips the full-resolution attempt after the first allocation failure.
 - ORM is R occlusion, G roughness, B metallic. Roughness and metalness come from [config/material-rules.yaml](../config/material-rules.yaml) plus local contrast and, for painted metal, low-saturation exposed chips. Metalness is not taken from brightness. Occlusion is a weak valley term so it does not double-darken the game's ambient term.
 
+## Source-anchored salvage
+
+Fidelity is applied after the Turbo edit. The graph stays CFG 1 with the fixed eight-step sigmas. v1 outputs stay valid because salvage uses `prompt_version` v2 only in its own run.
+
+`prk-remaster salvage` hardlinks the v1 source and Qwen albedo into a new run, then rebuilds `albedo_final.png`. Coarse colour and layout come from the source. Qwen contributes grain, and edges only where the source already has an edge in the same place. Filters are circular. Baked highlights are pulled down before the colour lock, and 8-pixel JPEG energy on a tiny source is not treated as detail. An organic texture that already matches the source at coarse scale and in the high band keeps the Qwen image, with a small average-chroma nudge.
+
+Briefs come from `config/name-lexicon.yaml` plus measured colour and structure. The compiled prompt is positive-only. When the filename and the pixels disagree, `effective_material` is what ORM uses. The catalogue class on the asset is left as imported.
+
+The captioner is `Qwen/Qwen2.5-VL-3B-Instruct`, recorded under `captioner` in `config/model-lock.yaml`. Weights live at `{work_root}/models/captioner/Qwen2.5-VL-3B-Instruct`. It runs only for an unreliable brief or a texture already queued for regeneration, from `scripts/caption_worker.py` against the ComfyUI PyTorch install. The worker uses the GPU when at least 9 GiB is free and otherwise stays on CPU. A caption that renames a pixel-read grass surface to stone or a wall is discarded. If the captioner cannot run, the lexicon and the visual measures still choose the route.
+
+Run `20261101-215758-d79815` anchored all 1,076 v1 textures, regenerated 6, and kept 2 of those new edits. Pack `dist/prk-hd-v02` was built without a zip and without installing over `prk-hd-v01`.
+
 ## What gets measured
 
 `doctor` and the run report record GPU name, driver, peak `nvidia-smi` memory, and wall time split from model inference time. Those numbers are written only after a real run. They are not estimated here.

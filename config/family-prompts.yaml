@@ -41,3 +41,21 @@ default_category: |
   Keep the original palette and feature placement.
   Add fine physically plausible surface detail.
   The texture is a seamless periodic tile.
+v2:
+  shared: |
+    Re-author the supplied original Anarchy Online texture as a premium modern-game albedo.
+    Orthographic, straight-on, unlit, uniform exposure, diffuse albedo.
+    Keep one repeating surface with the same layout and UV registration.
+    Seamless tile: opposite edges continue the same surface.
+  certain: |
+    The surface is {subject} ({name}, family {family}).
+    Its appearance is {appearance}.
+    Keep {hold}.
+    Add {enhance}.
+    Even diffuse colour across the tile, with the supplied image as the layout reference.
+  uncertain: |
+    Follow the supplied image. The subject is the surface already visible there ({name}, family {family}).
+    Its appearance is {appearance}.
+    Keep {hold}.
+    Add fine grain of that same visible material.
+    Even diffuse colour across the tile, with the supplied image as the layout reference.

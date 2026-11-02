@@ -1,0 +1,216 @@
+version: v1
+# Tokens are matched after the filename is split. Generic tokens do not invent a subject.
+generic:
+  - default
+  - std
+  - tex
+  - texture
+  - misc
+  - unnamed
+  - new
+  - test
+  - tmp
+  - image
+  - img
+noise:
+  - small
+  - large
+  - low
+  - high
+  - med
+  - mid
+  - tiny
+  - big
+  - tileable
+  - tiled
+  - png
+  - jpg
+  - jpeg
+  - dds
+  - bmp
+  - tga
+colors:
+  blue: blue
+  cyan: cyan
+  purple: purple
+  red: red
+  green: green
+  yellow: yellow
+  orange: orange
+  brown: brown
+  white: white
+  black: black
+  grey: grey
+  gray: grey
+  dark: dark
+  light: light
+  neutral: neutral
+  desat: desaturated
+settings:
+  dock: an industrial dock fitting
+  athens: dressed masonry
+  clan: a clan interior
+subjects:
+  cable:
+    class: cable
+    material: metal
+    kind: manufactured
+    rank: 90
+    subject: bundled metal cables
+    enhance: fine sheath braid, individual strands, and light scuffs inside each existing lane
+    hold: the same cable lanes, their spacing, and their metal colour
+  wire:
+    class: wire
+    material: metal
+    kind: manufactured
+    rank: 85
+    subject: metal wire
+    enhance: fine strands and light scuffs along the existing wires
+    hold: the same wire paths and metal colour
+  chain:
+    class: chain
+    material: metal
+    kind: manufactured
+    rank: 85
+    subject: metal chain
+    enhance: individual links and light wear on the existing chain
+    hold: the same link rhythm and metal colour
+  pipe:
+    class: pipe
+    material: metal
+    kind: manufactured
+    rank: 80
+    subject: metal pipes
+    enhance: seam lines, fittings, and light wear on the existing pipes
+    hold: the same pipe runs and their colour
+  rope:
+    class: rope
+    material: terrain
+    kind: manufactured
+    rank: 80
+    subject: rope
+    enhance: twisted fibres inside the existing rope
+    hold: the same rope paths and colour
+  stripe:
+    class: stripe
+    kind: graphic
+    rank: 80
+    subject: a panel with its original accent bands
+    enhance: fine panel grain and edge wear on the existing bands
+    hold: the original band positions, band count, and band colours
+  grass:
+    class: grass
+    material: terrain
+    kind: organic
+    rank: 85
+    subject: short grass
+    enhance: distinct blades, dry tips, and small clumps of the same grass
+    hold: the original greens and the existing clumps
+  dirt:
+    class: dirt
+    material: terrain
+    kind: organic
+    rank: 70
+    subject: bare soil
+    enhance: mineral grain, small pebbles, and uneven soil crumbs
+    hold: the original soil colour and the large lumps
+  soil:
+    class: dirt
+    material: terrain
+    kind: organic
+    rank: 70
+    subject: bare soil
+    enhance: mineral grain and small crumbs
+    hold: the original soil colour
+  sand:
+    class: sand
+    material: terrain
+    kind: organic
+    rank: 70
+    subject: sand
+    enhance: fine grains and small pebbles
+    hold: the original sand colour and any larger stones
+  limestone:
+    class: limestone
+    material: stone
+    kind: organic
+    rank: 75
+    subject: coursed limestone blocks
+    enhance: mineral grain and fine pitting inside the existing blocks
+    hold: the block courses, joints, and stone colour
+  stone:
+    class: stone
+    material: stone
+    kind: organic
+    rank: 40
+    subject: stone
+    enhance: mineral grain and fine pitting
+    hold: the original fractures and stone colour
+  rock:
+    class: stone
+    material: stone
+    kind: organic
+    rank: 40
+    subject: rock
+    enhance: mineral grain and fine pitting
+    hold: the original fractures and rock colour
+  roof:
+    class: roof
+    kind: graphic
+    rank: 55
+    subject: a roof surface
+    enhance: fine material grain that follows the existing pattern
+    hold: the original drawn pattern and its placement
+  wall:
+    class: wall
+    kind: manufactured
+    rank: 35
+    subject: a wall surface
+    enhance: fine material grain and light wear
+    hold: the panel boundaries and colour blocks
+  plate:
+    class: plate
+    kind: manufactured
+    rank: 30
+    subject: a flat panel
+    enhance: fine grain and light surface wear
+    hold: the original panel shapes and colours
+  metal:
+    class: metal
+    material: metal
+    kind: manufactured
+    rank: 20
+    subject: a metal surface
+    enhance: fine grain and light wear of that metal
+    hold: the original panels, edges, and colour
+  wood:
+    class: wood
+    material: interior
+    kind: organic
+    rank: 70
+    subject: wood
+    enhance: fine grain that follows the existing boards
+    hold: the board direction and wood colour
+  brick:
+    class: brick
+    material: architecture
+    kind: organic
+    rank: 70
+    subject: brickwork
+    enhance: fine clay grain and mortar texture in the existing joints
+    hold: the brick courses and mortar lines
+  tile:
+    class: tile
+    material: interior
+    kind: manufactured
+    rank: 45
+    subject: a tiled surface
+    enhance: fine grain inside the existing tiles
+    hold: the tile joints and colours
+  knot:
+    class: knot
+    kind: graphic
+    rank: 80
+    subject: an interlaced carved motif
+    enhance: fine stone grain inside the existing carving
+    hold: the motif shape, contrast, and placement

@@ -219,3 +219,79 @@ def write_gallery(registry: Registry, run_id: str, run_dir: Path, dest: Path | N
     index = dest / "index.html"
     index.write_text(html, encoding="utf-8")
     return index
+
+
+DRAMATIC_KEYS = (
+    "1010004:10946",
+    "1010004:44528",
+    "1010004:36111",
+    "1010006:215",
+    "1010004:255754",
+    "1010004:23133",
+    "1010004:99474",
+    "1010009:95482",
+    "1010009:9691",
+    "1010009:8544",
+    "1010004:20388",
+    "1010004:20908",
+)
+CONTROL_KEYS = ("1010006:2",)
+
+
+def _sheet_font(size: int):
+    from PIL import ImageFont
+    path = Path("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf")
+    if path.is_file():
+        return ImageFont.truetype(str(path), size=size)
+    return ImageFont.load_default()
+
+
+def _fit(image: Image.Image, size: int) -> Image.Image:
+    fitted = image.convert("RGB")
+    fitted.thumbnail((size, size), Image.Resampling.LANCZOS)
+    canvas = Image.new("RGB", (size, size), (18, 18, 18))
+    canvas.paste(fitted, ((size - fitted.size[0]) // 2, (size - fitted.size[1]) // 2))
+    return canvas
+
+
+def write_comparison_sheet(rows: list[dict], dest: Path, title: str) -> Path:
+    """Three columns: source, v1 Qwen, anchored albedo. ``rows`` carry paths and a metric line."""
+    from PIL import ImageDraw
+    dest = Path(dest)
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    if not rows:
+        image = Image.new("RGB", (640, 80), (16, 16, 16))
+        ImageDraw.Draw(image).text((12, 24), title + " (empty)", fill=(230, 230, 230), font=_sheet_font(18))
+        atomic_save_png(image, dest)
+        return dest
+    cell = 220
+    label_h = 52
+    header = 36
+    gap = 8
+    width = gap + 3 * (cell + gap)
+    height = header + gap + len(rows) * (cell + label_h + gap)
+    sheet = Image.new("RGB", (width, height), (12, 12, 12))
+    draw = ImageDraw.Draw(sheet)
+    font = _sheet_font(14)
+    small = _sheet_font(12)
+    draw.text((gap, 8), title, fill=(240, 240, 240), font=_sheet_font(18))
+    for index, row in enumerate(rows):
+        top = header + index * (cell + label_h + gap)
+        panels = (
+            ("source", row.get("source")),
+            ("qwen v1", row.get("qwen")),
+            ("anchored", row.get("anchored")),
+        )
+        for column, (label, path) in enumerate(panels):
+            left = gap + column * (cell + gap)
+            if path and Path(path).is_file():
+                sheet.paste(_fit(load_png(path), cell), (left, top))
+            else:
+                draw.rectangle((left, top, left + cell, top + cell), outline=(80, 80, 80))
+            draw.text((left, top + cell + 2), label, fill=(200, 200, 200), font=small)
+        caption = f"{row.get('key', '')}  {row.get('name') or ''}"
+        metrics = row.get("metrics") or ""
+        draw.text((gap, top + cell + 18), caption[:90], fill=(230, 230, 230), font=font)
+        draw.text((gap, top + cell + 34), str(metrics)[:140], fill=(170, 170, 170), font=small)
+    atomic_save_png(sheet, dest)
+    return dest

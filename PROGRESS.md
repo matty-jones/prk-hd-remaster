@@ -13,7 +13,7 @@ Save point for the PRK HD remaster factory. Updated as the system is built and r
 
 ## Implementation
 
-The factory is a `uv` project, command `prk-remaster`. Stages are catalogue import, read-only RDB extract, Qwen edit through the official 8-step Turbo ComfyUI graph, PBRFusion normal/depth, rule-based ORM and height, QA, pack, and install. Tests use synthetic images. `uv run pytest`: 14 passed.
+The factory is a `uv` project, command `prk-remaster`. Stages are catalogue import, read-only RDB extract, Qwen edit through the official 8-step Turbo ComfyUI graph, PBRFusion normal/depth, rule-based ORM and height, QA, pack, and install. Tests use synthetic images. `uv run pytest`: 26 passed.
 
 ## Models
 
@@ -29,4 +29,12 @@ Smoke on `1010004:5942` (run `20261031-132341-a2fa23`):
 
 Run `20261031-132341-a2fa23` completed at 00:09 MST on 1 November 2026. All 1,076 jobs are `qa_passed`. None were rejected, blocked, or failed. Labels: 1,028 `qwen-native`, 48 `qwen-1024`, and 1,076 `pbr-1024-upscaled`. The resume session took 25,755 s wall, 21,037 s of GPU time, and peaked at 15,809 MiB.
 
-The pack, gallery, and install are not built yet. See `docs/OPERATIONS.md`. In-game screenshots stay pending a user session.
+Pack `dist/prk-hd-v01` is the v1 output and was not modified by the salvage pass. In-game screenshots stay pending a user session.
+
+## Source-anchored salvage
+
+Run `20261101-215758-d79815` (`prompt_version` v2, `config_revision` v0.2.0) reads v1 and does not write into it. `source.png` and `raw_qwen.png` are hardlinks. The anchor keeps source colour and large layout, and keeps Qwen grain. On an organic texture whose high frequencies already agree with the source (grass `1010006:2`), the anchor keeps the Qwen picture and only nudges average chroma, so a sharp edit is not pulled back to the JPEG.
+
+Triage queued 6 regenerations, under the cap of 200. Two of those kept the new edit (`1010006:128`, `1010006:346`). The other four kept the anchored v1 image, including brock `1010006:215`, which is terrain rather than stone. Qwen2.5-VL-3B-Instruct is pinned in `config/model-lock.yaml` and cached by source SHA-256. A caption that contradicts a pixel grass reading is dropped. One caption survived, on `1010006:128`.
+
+PBRFusion and ORM were rerun from the corrected albedos. ORM uses `effective_material` when the filename and the pixels disagree. All 1,076 jobs are `packed`. Pack `dist/prk-hd-v02` has 1,168 files including aliases, is not zipped, and is not installed. Review sheets are `runs/20261101-215758-d79815/gallery/dramatic-triptych.png` and `worst-triptych.png`.

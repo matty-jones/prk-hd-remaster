@@ -398,10 +398,11 @@ def _pbr_stage(registry, cfg, run_id, run_dir, job, pbr_fn, stats, measure_vram,
     normal = circular_shift(normal.convert("RGB"), -(normal.size[0] // 2), -(normal.size[1] // 2))
     depth = circular_shift(depth.convert("L"), -(depth.size[0] // 2), -(depth.size[1] // 2))
     asset = registry.asset(key)
+    category = (job.get("detail") or {}).get("effective_material") or asset.get("material_class") or ""
     maps = pbr.derive_maps(
         albedo, normal, depth,
         name=asset.get("name") or "",
-        category=asset.get("material_class") or "",
+        category=category,
         rules=cfg["material_rules"],
         invert_height=bool(cfg.get("height_invert", False)),
     )

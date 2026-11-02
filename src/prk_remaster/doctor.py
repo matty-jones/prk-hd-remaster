@@ -43,6 +43,10 @@ def doctor(cfg: dict, *, offline: bool = False) -> list[tuple[str, bool, str]]:
     checks.append(("qwen licence accepted", accepted, "private local experimentation" if accepted else "not accepted"))
     missing = missing_weights(cfg)
     checks.append(("model weights", not missing, "missing " + ", ".join(missing) if missing else "present"))
+    caption_dir = Path(cfg["work_root"]) / "models" / "captioner" / "Qwen2.5-VL-3B-Instruct"
+    present = (caption_dir / "config.json").is_file()
+    required = bool((cfg.get("fidelity") or {}).get("require_captioner"))
+    checks.append(("captioner", present or not required, "present" if present else "not downloaded"))
     if offline:
         checks.append(("comfyui", True, "skipped (--offline)"))
         return checks

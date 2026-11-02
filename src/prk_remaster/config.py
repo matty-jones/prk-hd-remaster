@@ -38,6 +38,8 @@ def load_config(path: Path | None = None) -> dict:
     cfg["material_rules"] = load_yaml(cfg_dir / "material-rules.yaml")
     cfg["exclusions"] = load_yaml(cfg_dir / "exclusions.yaml")
     cfg["model_lock"] = load_yaml(cfg_dir / "model-lock.yaml")
+    lexicon_path = cfg_dir / "name-lexicon.yaml"
+    cfg["name_lexicon"] = load_yaml(lexicon_path) if lexicon_path.is_file() else {}
     return cfg
 
 

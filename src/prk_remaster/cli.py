@@ -20,6 +20,7 @@ from .planner import dumps_plan, load_ids, plan_jobs
 from .registry import Registry
 from .report import write_report
 from .runner import run_cohort
+from .salvage import run_salvage
 
 
 def _config(args):
@@ -116,6 +117,31 @@ def cmd_run(args) -> int:
         if run_dir != final_dir and run_dir.exists() and not final_dir.exists():
             run_dir.rename(final_dir)
     sys.stdout.write(json.dumps({"run_id": actual, "summary": result.get("summary"), "detail": result.get("detail")}, indent=2) + "\n")
+    return 0
+
+
+def cmd_salvage(args) -> int:
+    cfg = _config(args)
+    paths = ensure_work_dirs(cfg)
+    registry = Registry(paths["registry"])
+    keys = None
+    if args.keys:
+        keys = {item.strip() for item in args.keys.split(",") if item.strip()}
+    if args.ids_file:
+        keys = load_ids(args.ids_file)
+    result = run_salvage(
+        cfg, registry,
+        from_run=args.from_run,
+        run_id=None if args.run in (None, "", "latest") else args.run,
+        preset=args.preset,
+        keys=keys,
+        stop_after=args.stop_after,
+        force=args.force,
+        resume=args.resume,
+        regen_cap=args.regen_cap,
+        pack_name=args.pack_name,
+    )
+    sys.stdout.write(json.dumps(result, indent=2) + "\n")
     return 0
 
 
@@ -245,6 +271,21 @@ def build_parser() -> argparse.ArgumentParser:
     run_p.add_argument("--comfy-url")
     run_p.add_argument("--prk-root")
     run_p.set_defaults(func=cmd_run)
+
+    salvage_p = sub.add_parser("salvage")
+    salvage_p.add_argument("--from-run", required=True)
+    salvage_p.add_argument("--run", default="latest")
+    salvage_p.add_argument("--preset", default="aggressive")
+    salvage_p.add_argument("--keys", help="Comma-separated asset keys")
+    salvage_p.add_argument("--ids-file")
+    salvage_p.add_argument("--stop-after", default="pack", choices=("anchor", "regen", "pbr", "pack"))
+    salvage_p.add_argument("--force", action="store_true")
+    salvage_p.add_argument("--resume", action="store_true")
+    salvage_p.add_argument("--regen-cap", type=int)
+    salvage_p.add_argument("--pack-name", default="prk-hd-v02")
+    salvage_p.add_argument("--comfy-url")
+    salvage_p.add_argument("--prk-root")
+    salvage_p.set_defaults(func=cmd_salvage)
 
     for name, func in (("status", cmd_status), ("gallery", cmd_gallery), ("report", cmd_report)):
         item = sub.add_parser(name)

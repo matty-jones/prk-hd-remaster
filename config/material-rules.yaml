@@ -21,6 +21,10 @@ bare_metal_tokens:
   - aluminium
   - metallic
   - grate
+  - cable
+  - wire
+  - chain
+  - pipe
 painted_tokens:
   - paint
   - painted

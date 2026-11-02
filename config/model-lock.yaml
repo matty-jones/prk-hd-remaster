@@ -43,6 +43,11 @@ pbrfusion4:
   does_not_provide:
   - learned albedo
   - learned orm
+captioner:
+  repo: Qwen/Qwen2.5-VL-3B-Instruct
+  revision: main
+  license: Apache-2.0
+  note: Used only for unreliable filenames and the regeneration queue. Not a second remaster model.
 diffusers_fallback:
   repo: Qwen/Qwen-Image-2.1-Turbo
   pipeline: QwenImage21Pipeline

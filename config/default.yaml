@@ -44,3 +44,16 @@ seam_retry_band: 8
 seam_fail_above: 2.2
 seam_worsen_ratio: 1.75
 seam_worsen_delta: 0.8
+
+# Salvage recipe. The v1 run keeps prompt_version v1 so its cache keys stay valid.
+fidelity:
+  prompt_version: v2
+  config_revision: v0.2.0
+  stage_version: v0.2.0
+  regen_cap: 200
+  structure_regen_below: 0.55
+  chroma_conflict_above: 12
+  hf_agreement_below: 0.30
+  structure_retry_below: 0.72
+  delta_e_retry_above: 18
+  review_structure_below: 0.60

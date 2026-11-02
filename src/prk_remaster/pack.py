@@ -30,7 +30,7 @@ def _copy_map(src: Path, dest: Path) -> None:
     temporary.replace(dest)
 
 
-def build_pack(registry: Registry, run_id: str, dest: Path, name: str) -> dict:
+def build_pack(registry: Registry, run_id: str, dest: Path, name: str, *, archive: bool = True) -> dict:
     dest = Path(dest)
     if dest.exists():
         shutil.rmtree(dest)
@@ -84,15 +84,17 @@ def build_pack(registry: Registry, run_id: str, dest: Path, name: str) -> dict:
     problems = validate_pack(dest, manifest)
     if problems:
         raise PackError("; ".join(problems))
-    zip_path = dest.parent / f"{name}.zip"
-    if zip_path.exists():
-        zip_path.unlink()
-    with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
-        for path in sorted(dest.rglob("*")):
-            if path.is_file():
-                archive.write(path, arcname=str(Path(name) / path.relative_to(dest)))
-    manifest["zip"] = str(zip_path)
     manifest["pack_dir"] = str(dest)
+    manifest["zip"] = None
+    if archive:
+        zip_path = dest.parent / f"{name}.zip"
+        if zip_path.exists():
+            zip_path.unlink()
+        with zipfile.ZipFile(zip_path, "w", compression=zipfile.ZIP_DEFLATED) as archive_file:
+            for path in sorted(dest.rglob("*")):
+                if path.is_file():
+                    archive_file.write(path, arcname=str(Path(name) / path.relative_to(dest)))
+        manifest["zip"] = str(zip_path)
     return manifest
 
 

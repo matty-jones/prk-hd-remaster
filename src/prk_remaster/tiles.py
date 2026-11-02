@@ -45,6 +45,27 @@ def seam_is_worse(new_ratio: float, source_ratio: float, *, above: float = 2.2, 
     return new_ratio > max(source_ratio * worsen_ratio, source_ratio + worsen_delta)
 
 
+def wrap_blur(image: np.ndarray, sigma: float) -> np.ndarray:
+    """Gaussian blur with periodic boundaries."""
+    array = np.asarray(image, dtype=np.float32)
+    if sigma < 0.35:
+        return array.copy()
+    single = array.ndim == 2
+    if single:
+        array = array[:, :, None]
+    height, width, channels = array.shape
+    fy = np.fft.fftfreq(height).astype(np.float32)[:, None]
+    fx = np.fft.rfftfreq(width).astype(np.float32)[None, :]
+    kernel = np.exp(-2.0 * (np.pi ** 2) * (sigma ** 2) * (fy ** 2 + fx ** 2)).astype(np.float32)
+    out = np.empty_like(array)
+    for channel in range(channels):
+        spectrum = np.fft.rfft2(array[:, :, channel])
+        out[:, :, channel] = np.fft.irfft2(spectrum * kernel, s=(height, width)).astype(np.float32)
+    if single:
+        return out[:, :, 0]
+    return out
+
+
 def circular_shift(image: Image.Image, dx: int, dy: int) -> Image.Image:
     array = np.asarray(image)
     shifted = np.roll(np.roll(array, int(dy), axis=0), int(dx), axis=1)
