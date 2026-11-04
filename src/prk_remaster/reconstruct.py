@@ -79,7 +79,7 @@ def _resume_text(from_run: str, run_id: str) -> str:
     return (
         f"cd {REPO_ROOT}\n"
         "source .venv/bin/activate\n"
-        f"prk-remaster reconstruct --from-run {from_run} --run {run_id} --resume\n"
+        f"prk-remaster reconstruct --from-run {from_run} --run {run_id} --resume --pack-name prk-hd-v05\n"
     )
 
 
@@ -337,6 +337,11 @@ def _generate(registry, cfg, run_id, run_dir, from_dir, record, stats, force: bo
         try:
             _generate_one(registry, cfg, run_id, run_dir, job, edit_fn, settings, stats, force, record)
         except Exception as exc:  # noqa: BLE001
+            if is_oom(exc):
+                registry.update_job(run_id, key, status="extracted", rejection_reason=None, stage="generate")
+                registry.log_event(run_id, key, "generate_oom_pause", error=str(exc)[:300])
+                log.info("gpu out of memory at %s; pausing with the finished textures kept", key)
+                return True
             registry.update_job(run_id, key, status="failed", rejection_reason=str(exc)[:500], stage="generate")
             registry.log_event(run_id, key, "generate_error", error=str(exc)[:500])
             log.info("generate failed %s: %s", key, str(exc)[:200])

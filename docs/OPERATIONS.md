@@ -26,6 +26,8 @@ uv run prk-remaster reconstruct --from-run <v1-run-id> --run <v3-run-id> --resum
 
 `--limit 1` checks that a real image comes back. It is not the production cohort.
 
+`reconstruct --pack-name prk-hd-v05` draws the cohort again with the current prompts. Flat surfaces use the worn-stone wording from the shop-floor regen. Expressive surfaces use the detail wording. Leave `--pack-name` set so the run does not replace `dist/prk-hd-v03`.
+
 `refine` is the v4 material-scale pass. It reads a finished v3 run, hardlinks expressive assets, rewrites restrained albedos, rebuilds their lighting, and packs `prk-hd-v04`. It does not modify the source run and it does not install the pack. A `STOP` file or SIGTERM finishes the current texture. Resume with:
 
 ```bash

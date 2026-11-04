@@ -73,9 +73,21 @@ The floor's seam ratio rose from 3.29 on the v3 donor to 3.42 after the grain ca
 
 The lighting pass was resumed after a first attempt skipped PBR. That attempt treated v3's copied `pbr_seconds` as work already done in this run. Only a normal built in this pass sets `refine_pbr`.
 
-Run `20261103-140416-17b3ac` finished at 16:32 MST on 3 November 2026. All 1,076 jobs are `packed`. 746 restrained albedos were rewritten and re-lit. 330 expressive assets stayed hardlinked to v3. Pack `dist/prk-hd-v04` has 1,168 assets (aliases included), is hardlinked to the run, is not zipped, and is not installed. The shop floor in that pack is the regen, label `pbr-1024-plus-scale`. Its pre-stamp normal is `normal_base.png`. The split albedo is kept beside it as `albedo_split.png`.
+Run `20261103-140416-17b3ac` finished at 16:32 MST on 3 November 2026. All 1,076 jobs are `packed`. 746 restrained albedos were rewritten and re-lit. 330 expressive assets stayed hardlinked to v3. Pack `dist/prk-hd-v04` has 1,168 assets (aliases included), is hardlinked to the run, and is not zipped. It is installed in the client. The client copy of `prk-hd-v03` was removed. `dist/prk-hd-v03` is still on the data volume. The shop floor in that pack is the regen, label `pbr-1024-plus-scale`. Its pre-stamp normal is `normal_base.png`. The split albedo is kept beside it as `albedo_split.png`.
 
-Distance sheet: `runs/20261103-140416-17b3ac/gallery/1010009_30643-scale.png` (source, v1, v3, restrained split, regen) and `gallery/scale-report.json`. ComfyUI `output/prk-*` copies were deleted to free space, and the same sweep runs during the lighting pass. The data volume has about 28 GB free. v1, v2, v3, and `dist/prk-hd-v03` are unchanged.
+The distance sheets are six example textures, not six treatments of the whole cohort. `restrained` is the v3 image with fine grain turned down in place. That is the soft look, and it is what the other 745 flat surfaces got. `linked` is the v3 file itself (cable, dirt, grass, and the other expressive textures). `regen` exists only for the shop floor: that one texture was drawn again by Qwen. The packed floor is the regen.
+
+A full redraw uses `reconstruct`, which is the same Qwen path as that floor. Flat surfaces get the worn-stone prompt. Cable, dirt, and grass get the detail prompt, so they are redrawn rather than softened. It writes a new run and `dist/prk-hd-v05`. It does not install, and it does not modify v3 or v4.
+
+Run `20261103-214759-d9931f` started at 21:48 MST on 3 November 2026. 107 textures were drawn before Anarchy Online took the GPU. It was paused at 22:54 and resumed at 23:12 with the game closed. Generation finished at 09:06. Lighting was paused at 09:26 on texture 120 of 1,076, then resumed and finished. Pack `dist/prk-hd-v05` has 1,168 assets and is installed in the client. The client copy of `prk-hd-v04` was removed. `dist/prk-hd-v04` is still on the data volume. Comparison sheets, native center crops, source / v3 / v5: `runs/20261103-214759-d9931f/gallery/review-triptych.png` (the usual review textures plus the Newland floor) and `gallery/spread-triptych.png` (sand, rock, swamp, concrete, cracked ground, fungus, grating, factory stripes, concrete wall, temple tile). The ones that failed from the memory collision are drawn again. A later out-of-memory error pauses the run instead of failing the cohort. The redundant `dist/prk-hd-v01.zip` was removed so the data volume had room. The unpacked `dist/prk-hd-v01` folder is still there. Resume, from the repo, with the project virtualenv active:
+
+```bash
+prk-remaster reconstruct --from-run 20261031-132341-a2fa23 --run 20261103-214759-d9931f --resume --pack-name prk-hd-v05
+```
+
+`touch` a `STOP` file in the run directory to pause. Keep `--pack-name prk-hd-v05` so a resume does not replace `dist/prk-hd-v03`.
+
+Distance sheet: `runs/20261103-140416-17b3ac/gallery/1010009_30643-scale.png` (source, v1, v3, regen) and `gallery/scale-report.json`. ComfyUI `output/prk-*` copies were deleted to free space, and the same sweep runs during the lighting pass. The data volume has about 28 GB free. v1, v2, v3, and `dist/prk-hd-v03` are unchanged.
 
 Resume, from the repo, with the project virtualenv active:
 

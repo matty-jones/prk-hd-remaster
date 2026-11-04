@@ -35,7 +35,11 @@ def new_run_id() -> str:
 
 def is_oom(exc: BaseException) -> bool:
     text = str(exc).lower()
-    return "out of memory" in text or ("cuda" in text and "memory" in text)
+    return (
+        "out of memory" in text
+        or "exceed allowed memory" in text
+        or ("cuda" in text and "memory" in text)
+    )
 
 
 def sample_vram() -> float | None:
