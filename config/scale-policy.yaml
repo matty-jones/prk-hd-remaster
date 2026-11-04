@@ -1,0 +1,43 @@
+# Material-scale restraint. Macro and meso stay in the albedo.
+# Microstructure on flat manufactured surfaces is turned down in the albedo
+# and carried by the normal and the roughness instead.
+# Radii are in source-texel units at the output canvas.
+version: v1
+micro_texel: 0.75
+macro_texel: 4.0
+expressive_classes:
+  - cable
+  - wire
+  - chain
+  - rope
+  - dirt
+  - sand
+  - grass
+  - vegetation
+dressed_classes:
+  - stone
+  - wall
+  - tile
+  - plaster
+  - floor
+  - brick
+  - wood
+  - panel
+  - concrete
+restrained_materials:
+  - interior
+  - architecture
+  - metal
+modes:
+  restrained:
+    micro_albedo_gain: 0.25
+    meso_albedo_gain: 1.0
+    macro_albedo_gain: 1.0
+    micro_normal_weight: 0.35
+    micro_roughness: 0.10
+  expressive:
+    micro_albedo_gain: 1.0
+    meso_albedo_gain: 1.0
+    macro_albedo_gain: 1.0
+    micro_normal_weight: 0.0
+    micro_roughness: 0.0

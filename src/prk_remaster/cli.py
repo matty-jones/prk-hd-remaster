@@ -21,6 +21,7 @@ from .registry import Registry
 from .report import write_report
 from .runner import run_cohort
 from .reconstruct import run_reconstruct
+from .refine import run_refine
 from .salvage import run_salvage
 
 
@@ -165,6 +166,31 @@ def cmd_reconstruct(args) -> int:
         resume=args.resume,
         limit=args.limit,
         pack_name=args.pack_name,
+    )
+    sys.stdout.write(json.dumps(result, indent=2) + "\n")
+    return 0
+
+
+def cmd_refine(args) -> int:
+    cfg = _config(args)
+    paths = ensure_work_dirs(cfg)
+    registry = Registry(paths["registry"])
+    keys = None
+    if args.keys:
+        keys = {item.strip() for item in args.keys.split(",") if item.strip()}
+    if args.ids_file:
+        keys = load_ids(args.ids_file)
+    result = run_refine(
+        cfg, registry,
+        from_run=args.from_run,
+        run_id=None if args.run in (None, "", "latest") else args.run,
+        keys=keys,
+        stop_after=args.stop_after,
+        force=args.force,
+        resume=args.resume,
+        limit=args.limit,
+        pack_name=args.pack_name,
+        skip_regen=args.skip_regen,
     )
     sys.stdout.write(json.dumps(result, indent=2) + "\n")
     return 0
@@ -325,6 +351,21 @@ def build_parser() -> argparse.ArgumentParser:
     reconstruct_p.add_argument("--comfy-url")
     reconstruct_p.add_argument("--prk-root")
     reconstruct_p.set_defaults(func=cmd_reconstruct)
+
+    refine_p = sub.add_parser("refine")
+    refine_p.add_argument("--from-run", required=True)
+    refine_p.add_argument("--run", default="latest")
+    refine_p.add_argument("--keys", help="Comma-separated asset keys")
+    refine_p.add_argument("--ids-file")
+    refine_p.add_argument("--stop-after", default="pack", choices=("albedo", "pbr", "pack"))
+    refine_p.add_argument("--force", action="store_true")
+    refine_p.add_argument("--resume", action="store_true")
+    refine_p.add_argument("--limit", type=int)
+    refine_p.add_argument("--pack-name")
+    refine_p.add_argument("--skip-regen", action="store_true")
+    refine_p.add_argument("--comfy-url")
+    refine_p.add_argument("--prk-root")
+    refine_p.set_defaults(func=cmd_refine)
 
     for name, func in (("status", cmd_status), ("gallery", cmd_gallery), ("report", cmd_report)):
         item = sub.add_parser(name)

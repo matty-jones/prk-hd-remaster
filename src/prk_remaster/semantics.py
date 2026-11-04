@@ -13,6 +13,7 @@ import numpy as np
 from PIL import Image
 
 from .quality import cie_lab
+from .scale import scale_mode
 
 _TOKEN = re.compile(r"[a-z0-9]+")
 _SIZE = re.compile(r"^\d+x\d+$")
@@ -350,7 +351,7 @@ def apply_caption(brief: dict, caption: dict | None) -> dict:
     return updated
 
 
-def apply_v3_detail(brief: dict, prompts: dict) -> dict:
+def apply_v3_detail(brief: dict, prompts: dict, policy: dict | None = None) -> dict:
     """Use the v3 microstructure line for a known subject. The filename subject stays."""
     table = prompts.get("v3_detail") or {}
     text = str(table.get(brief.get("subject_class") or "") or "").strip()
@@ -360,8 +361,16 @@ def apply_v3_detail(brief: dict, prompts: dict) -> dict:
     if setting and subject.endswith(setting):
         subject = subject[: -(len(setting))].removesuffix(" on ").strip()
         updated["subject"] = subject
+    if policy is not None:
+        updated["scale_mode"] = scale_mode(
+            str(updated.get("subject_class") or ""),
+            str(updated.get("kind") or ""),
+            str(updated.get("effective_material") or ""),
+            policy,
+        )
     if not text:
-        return updated if updated.get("subject") != brief.get("subject") else brief
+        changed = updated.get("subject") != brief.get("subject") or "scale_mode" in updated
+        return updated if changed else brief
     updated["enhance"] = text
     return updated
 
@@ -383,6 +392,11 @@ def compile_prompt(asset: dict, brief: dict, prompts: dict, target_w: int, targe
         "height": target_h,
     }
     text = (shared + "\n" + body.strip()).format(**fields)
+    if version == "v3":
+        mode = brief.get("scale_mode") or "expressive"
+        extra = (block.get(mode) or "").strip()
+        if extra:
+            text += "\n" + extra.format(**fields)
     text += (
         f"\nSource size {asset.get('source_width')}x{asset.get('source_height')}, "
         f"target {target_w}x{target_h}, aspect preserved."

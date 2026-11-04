@@ -85,6 +85,36 @@ def test_brock_green_image_is_not_described_as_stone():
     assert "grass" in revised
 
 
+def test_v3_floor_prompt_keeps_meso_and_quiets_micro():
+    cfg = _cfg()
+    image = Image.new("RGB", (32, 32), (140, 120, 70))
+    asset = {"name": "", "family": "", "material_class": "interior", "source_width": 128, "source_height": 128}
+    brief = apply_v3_detail(build_brief(asset, image, cfg["name_lexicon"]), cfg["family_prompts"], cfg["scale_policy"])
+    text = compile_prompt(asset, brief, cfg["family_prompts"], 2048, 2048, version="v3").lower()
+    assert brief["scale_mode"] == "restrained"
+    assert "quiet" in text
+    assert "compression" in text
+    assert "pixel blocks" in text
+    assert "sharp fine grain" not in text
+
+
+def test_v3_cable_stays_expressive_when_the_class_is_known():
+    cfg = _cfg()
+    image = Image.new("RGB", (32, 64), (120, 90, 40))
+    asset = {
+        "name": "dock_factory_metal_cable.png",
+        "family": "dock_factory",
+        "material_class": "metal",
+        "source_width": 32,
+        "source_height": 64,
+    }
+    brief = apply_v3_detail(build_brief(asset, image, cfg["name_lexicon"]), cfg["family_prompts"], cfg["scale_policy"])
+    text = compile_prompt(asset, brief, cfg["family_prompts"], 512, 1024, version="v3").lower()
+    assert brief["scale_mode"] == "expressive"
+    assert "braid" in text
+    assert "does not copy the reference blur" in text
+
+
 def test_empty_filename_does_not_invent_a_subject():
     cfg = _cfg()
     image = Image.new("RGB", (32, 32), (90, 90, 90))

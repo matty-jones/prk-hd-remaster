@@ -62,6 +62,18 @@ PBRFusion still runs at a 1024 long side. The structural normal is then reorient
 
 The raw edit is saved, colour-locked, then deleted so the cohort fits on the data volume. Resume skips a texture whose albedo is present and whose `lock_version` matches.
 
+## Material-scale restraint (v4)
+
+v3's shared prompt told most surfaces, including unnamed floors, to invent sharp fine grain. The Lab lock then kept lightness finer than about 12 px, and the detail stamp copied that band into the normal. On the Newland floor `1010009:30643` both parts are real: some of the stipple is phase-locked to the source blocks, and more of it was invented. The packed v3 pixels are left as they are. `prk-remaster refine` reads that run and writes a new one.
+
+`config/scale-policy.yaml` splits the cohort. Cable, wire, chain, rope, dirt, sand, grass, vegetation, and terrain are expressive and are hardlinked unchanged. Interior, architecture, metal, and dressed stone or plaster have their albedo micro band (finer than 0.75 source texels) multiplied by 0.25. Macro and meso gains stay 1. The removed lightness, not the cleaned albedo, feeds a lighter normal stamp (weight 0.35) and a small roughness variation (0.10). PBRFusion runs again at 1024 on the cleaned albedo. The structural normal is saved as `normal_base.png` before the stamp. The label is `pbr-1024-plus-scale`.
+
+The gain stays at 0.25 because matching v1's micro RMS would put the source grid back. v1's micro energy on this floor is grout and slab edges. A one-off regen of the floor is the packed albedo. Its micro band is louder than the split (20.6 against 9.95), so the automatic gate kept the split, but the regen is the worn stone that ships. `albedo_regen.png` is that image. A later regen still replaces a split only when its own micro band is quieter and the tile pattern holds.
+
+Quieting the interior raises the seam ratio even when the edge step did not grow. QA for a refined albedo uses the donor's seam as the baseline, so a seam v3 already shipped is not a new failure.
+
+`RVK_GroundGrain` is not this floor. In ao-vk, `TerrainGrain` returns immediately when the ground tile already has a pack normal.
+
 ## What gets measured
 
 `doctor` and the run report record GPU name, driver, peak `nvidia-smi` memory, and wall time split from model inference time. Those numbers are written only after a real run. They are not estimated here.

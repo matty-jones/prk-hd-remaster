@@ -16,7 +16,7 @@ from .imaging import atomic_save_png, load_png, pixel_sha256, sha256_bytes, sha2
 from .planner import derive_seed, link_identical_pixels, plan_jobs, reduced_long_side
 from .quality import check_albedo, check_height, check_normal, check_orm, colour_shift
 from .registry import Registry
-from .tiles import circular_shift, preview_3x3, relight, repair_seam
+from .tiles import circular_shift, preview_3x3, relight, repair_seam, seam_ratio
 
 log = logging.getLogger("prk_remaster")
 
@@ -438,9 +438,16 @@ def _qa(registry, cfg, run_id, run_dir, job) -> None:
     orm = load_png(directory / "orm.png")
     source = load_png(directory / "source.png")
     reasons = []
+    # A restrained albedo is the v3 image with fine grain pulled out. That
+    # quiets interior steps, so the seam ratio rises even when the edge itself
+    # did not grow. Judge the seam against the donor that already shipped.
+    source_seam = float(asset.get("seam") or 99)
+    donor = directory / "albedo_donor.png"
+    if donor.is_file():
+        source_seam = max(source_seam, seam_ratio(load_png(donor)))
     reasons += check_albedo(
         albedo, target_w=int(job["target_w"]), target_h=int(job["target_h"]),
-        source_seam=float(asset.get("seam") or 99), tileable=True, cfg=cfg,
+        source_seam=source_seam, tileable=True, cfg=cfg,
     )
     reasons += check_normal(normal, albedo)
     reasons += check_height(height, albedo)

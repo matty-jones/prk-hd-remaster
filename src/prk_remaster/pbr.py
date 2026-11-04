@@ -68,15 +68,30 @@ def _occlusion(height: np.ndarray, strength: float, floor: float) -> np.ndarray:
     return np.clip(1.0 - strength * valleys, floor, 1.0)
 
 
-def build_orm(albedo: Image.Image, height: Image.Image, policy: dict, rules: dict) -> Image.Image:
+def build_orm(
+    albedo: Image.Image,
+    height: Image.Image,
+    policy: dict,
+    rules: dict,
+    residual: np.ndarray | None = None,
+    residual_roughness: float = 0.0,
+) -> Image.Image:
     """R occlusion, G roughness, B metallic. Metalness is not copied from luma."""
     rgb = np.asarray(albedo.convert("RGB"))
     gray = cv2.cvtColor(rgb, cv2.COLOR_RGB2GRAY).astype(np.float32) / 255.0
-    blur = cv2.GaussianBlur(gray, (0, 0), 2.0)
-    detail = np.abs(gray - blur)
-    detail = np.clip(detail / (float(np.percentile(detail, 95)) + 1e-6), 0.0, 1.0)
+    if residual is not None and float(residual_roughness) > 0.0:
+        detail_src = np.abs(np.asarray(residual, dtype=np.float32))
+        if detail_src.shape != gray.shape:
+            detail_src = cv2.resize(detail_src, (gray.shape[1], gray.shape[0]), interpolation=cv2.INTER_LINEAR)
+        detail = np.clip(detail_src / (float(np.percentile(detail_src, 95)) + 1e-6), 0.0, 1.0)
+        rough_gain = float(residual_roughness)
+    else:
+        blur = cv2.GaussianBlur(gray, (0, 0), 2.0)
+        detail = np.abs(gray - blur)
+        detail = np.clip(detail / (float(np.percentile(detail, 95)) + 1e-6), 0.0, 1.0)
+        rough_gain = float(policy.get("roughness_detail", 0.0))
     rough = np.clip(
-        float(policy["roughness"]) + (detail - 0.35) * float(policy.get("roughness_detail", 0.0)),
+        float(policy["roughness"]) + (detail - 0.35) * rough_gain,
         0.05,
         1.0,
     )
@@ -179,9 +194,14 @@ def _relief_field(albedo: Image.Image) -> np.ndarray:
     return fine * 0.65 + mid * 0.45
 
 
-def blend_detail_normal(normal: Image.Image, albedo: Image.Image, weight: float) -> Image.Image:
-    """Add native-resolution albedo grain to a structural normal. Weight 0 keeps the input."""
-    field = _relief_field(albedo)
+def blend_detail_field(normal: Image.Image, field: np.ndarray, weight: float) -> Image.Image:
+    """Fold a lightness field into a structural normal. Weight 0 keeps the input."""
+    field = np.asarray(field, dtype=np.float32)
+    target = (int(field.shape[1]), int(field.shape[0]))
+    if normal.size != target:
+        normal = resize_normal(normal, target)
+    if float(weight) <= 0.0 or float(np.percentile(np.abs(field), 95)) < 1e-3:
+        return normal
     scale = float(np.percentile(np.abs(field), 95)) + 1e-3
     field = field / scale
     # Adjacent difference. A two-pixel step is invisible to a radius-1 central difference.
@@ -193,23 +213,34 @@ def blend_detail_normal(normal: Image.Image, albedo: Image.Image, weight: float)
     nz = np.ones_like(nx)
     length = np.sqrt(nx * nx + ny * ny + nz * nz)
     detail = np.stack([nx / length, ny / length, nz / length], axis=-1).astype(np.float32)
-    if normal.size != albedo.size:
-        normal = resize_normal(normal, albedo.size)
     blended = _rnm(_decode_normal(normal), detail)
     return _encode_normal(blended)
 
 
-def stamp_detail_height(height: Image.Image, albedo: Image.Image, weight: float) -> Image.Image:
-    """Add the same fine relief to the height map so it matches the detail normal."""
-    field = _relief_field(albedo)
+def blend_detail_normal(normal: Image.Image, albedo: Image.Image, weight: float) -> Image.Image:
+    """Add native-resolution albedo grain to a structural normal. Weight 0 keeps the input."""
+    return blend_detail_field(normal, _relief_field(albedo), weight)
+
+
+def stamp_detail_field(height: Image.Image, field: np.ndarray, weight: float) -> Image.Image:
+    """Add a lightness field to the height map so it matches the detail normal."""
+    field = np.asarray(field, dtype=np.float32)
+    target = (int(field.shape[1]), int(field.shape[0]))
+    if height.size != target:
+        height = height.resize(target, Image.Resampling.BILINEAR)
+    if float(weight) <= 0.0 or float(np.percentile(np.abs(field), 95)) < 1e-3:
+        return height.convert("L")
     scale = float(np.percentile(np.abs(field), 95)) + 1e-3
     field = np.clip(field / scale, -1.0, 1.0)
-    if height.size != albedo.size:
-        height = height.resize(albedo.size, Image.Resampling.BILINEAR)
     base = np.asarray(height.convert("L"), dtype=np.float32)
     amp = 22.0 * float(np.clip(weight, 0.0, 1.0))
     stamped = np.clip(np.rint(base + field * amp), 0, 255).astype(np.uint8)
     return Image.fromarray(stamped, "L")
+
+
+def stamp_detail_height(height: Image.Image, albedo: Image.Image, weight: float) -> Image.Image:
+    """Add the same fine relief to the height map so it matches the detail normal."""
+    return stamp_detail_field(height, _relief_field(albedo), weight)
 
 
 def detail_weight(subject_class: str, kind: str) -> float:

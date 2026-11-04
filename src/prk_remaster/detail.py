@@ -27,8 +27,11 @@ def _from_lab(lab: np.ndarray) -> np.ndarray:
     return cv2.cvtColor(u8, cv2.COLOR_LAB2RGB).astype(np.float32)
 
 
-def reference_sigma(scale: float, kind: str, subject_class: str) -> float:
+def reference_sigma(scale: float, kind: str, subject_class: str, scale_mode: str = "") -> float:
     """Output-pixel radius of one source texel, tightened or loosened by material."""
+    if scale_mode == "restrained":
+        # Wide enough that a source-texel block is not handed to the model as an edge.
+        return float(np.clip(scale * 1.35, 1.5, 28.0))
     if subject_class in {"dirt", "sand", "soil"}:
         factor = 0.85
     elif subject_class in {"cable", "wire", "chain", "rope"}:
@@ -52,16 +55,20 @@ def structure_reference(
     *,
     kind: str = "organic",
     subject_class: str = "",
+    scale_mode: str = "",
 ) -> Image.Image:
     """Canvas-sized layout. Strong edges stay. Sub-texel mush does not."""
     up = np.asarray(source.convert("RGB").resize(size, Image.Resampling.LANCZOS))
     scale = max(size) / max(max(source.size), 1)
-    space = reference_sigma(scale, kind, subject_class)
-    colour = 46.0 if subject_class in {"dirt", "sand", "soil"} else 32.0
-    if kind == "organic" and subject_class not in {"dirt", "sand", "soil"}:
-        colour = 22.0
-    if kind == "graphic":
-        colour = 18.0
+    space = reference_sigma(scale, kind, subject_class, scale_mode)
+    if scale_mode == "restrained":
+        colour = 72.0
+    else:
+        colour = 46.0 if subject_class in {"dirt", "sand", "soil"} else 32.0
+        if kind == "organic" and subject_class not in {"dirt", "sand", "soil"}:
+            colour = 22.0
+        if kind == "graphic":
+            colour = 18.0
     pad = max(2, int(round(space * 2.0)))
     pad = min(pad, max(1, min(size) // 5))
     padded = np.pad(up, ((pad, pad), (pad, pad), (0, 0)), mode="wrap")

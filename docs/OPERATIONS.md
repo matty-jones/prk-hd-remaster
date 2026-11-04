@@ -26,6 +26,12 @@ uv run prk-remaster reconstruct --from-run <v1-run-id> --run <v3-run-id> --resum
 
 `--limit 1` checks that a real image comes back. It is not the production cohort.
 
+`refine` is the v4 material-scale pass. It reads a finished v3 run, hardlinks expressive assets, rewrites restrained albedos, rebuilds their lighting, and packs `prk-hd-v04`. It does not modify the source run and it does not install the pack. A `STOP` file or SIGTERM finishes the current texture. Resume with:
+
+```bash
+uv run prk-remaster refine --from-run <v3-run-id> --run <v4-run-id> --resume
+```
+
 Useful filters: `--family ground:sand`, `--types 1010006`, `--ids-file ids.txt` (one `type:id` per line).
 
 ## Install and roll back

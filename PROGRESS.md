@@ -45,9 +45,9 @@ v3 is a new run. It does not write into v1 (`20261031-132341-a2fa23`) or v2 (`20
 
 Qwen-Image-2.1 drops the vision tokens and conditions on a VAE latent of the reference at the canvas size. Feeding a Lanczos upscale makes Turbo redraw that blur, and the v2 anchor then removes new edges. v3 sends an edge-preserving layout instead, names the microstructure in the prompt, and restores broad colour with a wide Lab lock that keeps the generated grain. Detail is scored at native resolution above the source Nyquist, not after a downsample to 256, and new grain is not required to match source pixels. PBRFusion stays at 1024; a detail normal from the albedo is blended on top (`pbr-1024-plus-detail`).
 
-The pass is resumable. A `STOP` file in the run directory, or SIGTERM, finishes the current texture. The resume command is in `runs/<v3-id>/RESUME.txt`. Native crops for the review set land in `runs/<v3-id>/gallery/crops/`. Pack output is `dist/prk-hd-v03` and is not installed over v1.
+The pass is resumable. A `STOP` file in the run directory, or SIGTERM, finishes the current texture. The resume command is in `runs/<v3-id>/RESUME.txt`. Native crops for the review set land in `runs/<v3-id>/gallery/crops/`. The combined sheet is `runs/20261102-102535-4368ce/gallery/review-triptych.png` (source, v2, v3, native center crops). Pack output is `dist/prk-hd-v03` and is not installed over v1.
 
-Run `20261102-102535-4368ce` is the v3 cohort. The six review textures were generated first. Cable `1010004:20908` has braided strands in the original lanes and the bronze/brown of the source. Dirt `1010004:10946` and `1010004:44528` have granular soil instead of the v2 blur, with the source's brown. Grass `1010006:2` keeps the clump layout and the green; the blades are redrawn thicker than the v2 sharpen. The dark corroded wall `1010004:224626` and the panel wall `1010009:8544` keep their shapes and gain fine grain. Colour lock is lightness at 12px and chroma at 5px (`lock_version` 2).
+Run `20261102-102535-4368ce` finished at 03:25 MST on 3 November 2026. All 1,076 jobs are `packed`. None failed or were rejected. Pack `dist/prk-hd-v03` has 1,168 assets (aliases included), is hardlinked to the run, is not zipped, and is not installed. The six review textures were generated first. Cable `1010004:20908` has braided strands in the original lanes and the bronze/brown of the source. Dirt `1010004:10946` and `1010004:44528` have granular soil instead of the v2 blur, with the source's brown. Grass `1010006:2` keeps the clump layout and the green; the blades are redrawn thicker than the v2 sharpen. The dark corroded wall `1010004:224626` and the panel wall `1010009:8544` keep their shapes and gain fine grain. Colour lock is lightness at 12px and chroma at 5px (`lock_version` 2).
 
 Resume, from the repo, with the project virtualenv active:
 
@@ -58,3 +58,27 @@ prk-remaster reconstruct --from-run 20261031-132341-a2fa23 --run 20261102-102535
 To pause before a reboot, `touch /mnt/m/prk-hd-remaster/runs/20261102-102535-4368ce/STOP` and wait for the current texture to finish. Do not delete the run directory.
 
 The data volume has about 30 GB free. After the colour lock the raw edit and the structure reference are deleted, and the pack hardlinks its maps to the run instead of copying them. `depth_raw.png` and `preview_relit.png` are removed after QA. v1, v2, and both existing pack folders are left in place.
+
+## Material-scale restraint (v4)
+
+v4 reads v3 `20261102-102535-4368ce` and writes run `20261103-140416-17b3ac`. It does not modify v1, v2, v3, or `dist/prk-hd-v03`, and it is not installed.
+
+The Newland shop floor `1010009:30643` (128 to 2048, one source texel is 16 px) had both causes. v3 micro RMS 32.54, of which 15.30 is phase-locked to the source lattice and 28.72 is grain the model invented. v1 micro RMS is 25.37, but that energy is grout and edges, not stipple. The split at micro gain 0.25 (sigma 0.75 texels) drops floor micro RMS to 9.95 and keeps meso agreement with v3 at 0.981. Lattice-locked RMS falls to 5.8, near v1's 6.6. A wider cutoff smears the tile pattern, and raising the gain back toward v1's RMS puts the grid back. Panel `1010009:8544` and wall `1010004:224626` follow the same split. Cable `1010004:20908`, dirt `1010004:10946`, and grass `1010006:2` are hardlinks of the v3 files.
+
+A one-off Qwen regen of the floor (micro RMS 20.58, meso agreement 0.991) is the packed albedo. The automatic gate kept the split because that micro band is louder than the split's 9.95, but the regen is the worn stone that should ship. It is `albedo_regen.png`. A later regen replaces a split only when its own micro band is quieter and the tile pattern holds.
+
+Restrained surfaces are interior, architecture, metal, dressed stone or plaster, and other manufactured kinds. Expressive classes (cable, wire, chain, rope, dirt, sand, grass, vegetation) and terrain stay untouched. Removed lightness goes into a lighter normal stamp (`micro_normal_weight` 0.35) and roughness variation (`micro_roughness` 0.10). PBRFusion is rerun on the cleaned albedo. `normal_base.png` is the pre-stamp normal.
+
+The floor's seam ratio rose from 3.29 on the v3 donor to 3.42 after the grain came out, because interior steps got quieter, not because a new edge appeared. QA compares a restrained albedo with the donor seam as well as the catalogue seam. `RVK_GroundGrain` does not run on this floor: `TerrainGrain` returns when the tile already has a pack normal. No ao-vk change.
+
+The lighting pass was resumed after a first attempt skipped PBR. That attempt treated v3's copied `pbr_seconds` as work already done in this run. Only a normal built in this pass sets `refine_pbr`.
+
+Run `20261103-140416-17b3ac` finished at 16:32 MST on 3 November 2026. All 1,076 jobs are `packed`. 746 restrained albedos were rewritten and re-lit. 330 expressive assets stayed hardlinked to v3. Pack `dist/prk-hd-v04` has 1,168 assets (aliases included), is hardlinked to the run, is not zipped, and is not installed. The shop floor in that pack is the regen, label `pbr-1024-plus-scale`. Its pre-stamp normal is `normal_base.png`. The split albedo is kept beside it as `albedo_split.png`.
+
+Distance sheet: `runs/20261103-140416-17b3ac/gallery/1010009_30643-scale.png` (source, v1, v3, restrained split, regen) and `gallery/scale-report.json`. ComfyUI `output/prk-*` copies were deleted to free space, and the same sweep runs during the lighting pass. The data volume has about 28 GB free. v1, v2, v3, and `dist/prk-hd-v03` are unchanged.
+
+Resume, from the repo, with the project virtualenv active:
+
+```bash
+prk-remaster refine --from-run 20261102-102535-4368ce --run 20261103-140416-17b3ac --resume
+```

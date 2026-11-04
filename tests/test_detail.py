@@ -68,6 +68,23 @@ def test_native_detail_sees_specks_that_a_256_downsample_erases():
     assert report["structure"] > 0.9
 
 
+def test_restrained_reference_softens_block_edges_more_than_a_wall():
+    small = np.full((8, 8, 3), 40, np.uint8)
+    small[::2, ::2] = 200
+    source = Image.fromarray(small)
+    tight = np.asarray(structure_reference(source, (64, 64), kind="manufactured", subject_class="wall"))
+    wide = np.asarray(structure_reference(
+        source, (64, 64), kind="manufactured", subject_class="wall", scale_mode="restrained",
+    ))
+
+    def energy(rgb: np.ndarray) -> float:
+        luma = rgb @ np.array([0.299, 0.587, 0.114], dtype=np.float32)
+        high = luma - wrap_blur(luma, 1.1)
+        return float(np.mean(high ** 2))
+
+    assert energy(wide) < energy(tight) * 0.75
+
+
 def test_detail_normal_adds_grain_and_stays_a_unit_normal():
     albedo_array = np.full((48, 48, 3), 90, np.uint8)
     albedo_array[::2, ::2] = 200

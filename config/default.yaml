@@ -65,3 +65,13 @@ reconstruct:
   config_revision: v0.3.0
   stage_version: v0.3.0
   pack_name: prk-hd-v03
+
+# Material-scale pass over a finished v3 run. Expressive albedos are linked.
+# Flat surfaces are restrained, then their normals are rebuilt.
+refine:
+  prompt_version: v3
+  config_revision: v0.3.1
+  stage_version: v0.3.1
+  pack_name: prk-hd-v04
+  compare_keys:
+    - "1010009:30643"

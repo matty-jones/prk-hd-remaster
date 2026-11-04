@@ -355,7 +355,11 @@ def _generate_one(registry, cfg, run_id, run_dir, job, edit_fn, settings, stats,
     directory = _asset_dir(run_dir, key)
     asset = registry.asset(key) or {}
     source = load_png(directory / "source.png").convert("RGB")
-    brief = apply_v3_detail(build_brief(asset, source, cfg.get("name_lexicon") or {}), cfg.get("family_prompts") or {})
+    brief = apply_v3_detail(
+        build_brief(asset, source, cfg.get("name_lexicon") or {}),
+        cfg.get("family_prompts") or {},
+        cfg.get("scale_policy") or {},
+    )
     target = (int(job.get("target_w") or 0), int(job.get("target_h") or 0))
     if min(target) < 32:
         target = source.size
@@ -370,6 +374,7 @@ def _generate_one(registry, cfg, run_id, run_dir, job, edit_fn, settings, stats,
     if force or not raw_path.is_file():
         reference = structure_reference(
             source, target, kind=brief.get("kind") or "organic", subject_class=brief.get("subject_class") or "",
+            scale_mode=brief.get("scale_mode") or "",
         )
         try:
             edited, elapsed, peak = _edit_once(edit_fn, reference, prompt, int(job.get("seed") or 1), settings, stats)
@@ -379,6 +384,7 @@ def _generate_one(registry, cfg, run_id, run_dir, job, edit_fn, settings, stats,
             smaller = reduced_long_side(target[0], target[1], 1024, int(cfg["material_rules"].get("snap", 32)))
             reference = structure_reference(
                 source, smaller, kind=brief.get("kind") or "organic", subject_class=brief.get("subject_class") or "",
+                scale_mode=brief.get("scale_mode") or "",
             )
             edited, elapsed, peak = _edit_once(edit_fn, reference, prompt, int(job.get("seed") or 1), settings, stats)
             label = "qwen-1024"
