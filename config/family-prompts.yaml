@@ -80,13 +80,17 @@ v3:
     Invent sharp intermediate and fine surface detail that the low-resolution source could not store.
     Fill the surface with this new detail: {enhance}.
     That detail is sharper than the reference and does not copy the reference blur.
+  lane: |
+    Add tight braid inside each lane already visible in the reference.
+    That braid is sharper than the reference and stays inside those lanes.
+    Keep the same number of lanes as the reference, and keep the empty gaps empty.
   restrained: |
     Keep tile boundaries, joints, broad colour regions, and large cracks in place.
     Rebuild worn surface variation at the scale of those shapes: slab faces, stains, and coursing.
     Treat the reference's blocky speckle as compression, not pores, chips, or grit.
     Keep the albedo's fine grain quiet and even. Do not sharpen the reference's pixel blocks.
 v3_detail:
-  cable: tight braided sheath and separate twisted strands running along every existing cable lane
+  cable: tight braid and separate twisted strands inside each existing cable
   wire: separate twisted strands along each existing wire
   chain: individual links and edge wear on the existing chain
   rope: twisted fibres inside the existing rope

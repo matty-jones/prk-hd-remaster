@@ -35,6 +35,7 @@ def reference_sigma(scale: float, kind: str, subject_class: str, scale_mode: str
     if subject_class in {"dirt", "sand", "soil"}:
         factor = 0.85
     elif subject_class in {"cable", "wire", "chain", "rope"}:
+        # v3 and v5 both used this radius. A 0.20 trial did not change the lane count.
         factor = 0.70
     elif subject_class in {"grass", "vegetation"}:
         factor = 0.10

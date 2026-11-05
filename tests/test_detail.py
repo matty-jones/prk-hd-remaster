@@ -1,9 +1,16 @@
 import numpy as np
 from PIL import Image
 
-from prk_remaster.detail import lock_coarse_colour, structure_reference
+from prk_remaster.detail import lock_coarse_colour, reference_sigma, structure_reference
 from prk_remaster.pbr import blend_detail_normal, stamp_detail_height
-from prk_remaster.quality import check_normal, highpass_energy, native_fidelity
+from prk_remaster.quality import (
+    check_normal,
+    count_lanes,
+    highpass_energy,
+    native_fidelity,
+    source_scale_issues,
+    source_scale_report,
+)
 from prk_remaster.tiles import wrap_blur
 
 
@@ -83,6 +90,43 @@ def test_restrained_reference_softens_block_edges_more_than_a_wall():
         return float(np.mean(high ** 2))
 
     assert energy(wide) < energy(tight) * 0.75
+
+
+def test_cable_reference_uses_the_radius_that_kept_the_v3_lanes():
+    # Scale 16 is the 32-wide cable enlarged to 512. v3 and v5 both used this radius.
+    assert abs(reference_sigma(16, "manufactured", "cable") - 11.2) < 0.05
+    assert reference_sigma(16, "manufactured", "cable") > reference_sigma(16, "manufactured", "wall")
+
+
+def _bars(width: int, height: int, columns: list[tuple[int, int]]) -> Image.Image:
+    image = np.full((height, width, 3), 28, np.uint8)
+    for start, end in columns:
+        image[:, start:end] = (210, 160, 50)
+    return Image.fromarray(image)
+
+
+def test_source_scale_keeps_lane_count_and_rejects_a_blurred_drawing():
+    source = _bars(32, 64, [(2, 6), (10, 14), (20, 24), (27, 31)])
+    sharp = source.resize((128, 256), Image.Resampling.NEAREST)
+    report = source_scale_report(source, sharp)
+    assert report["source_lanes"] == 4
+    assert report["lanes"] == 4
+    assert report["edge_retention"] > 0.45
+    assert source_scale_issues(report, subject_class="cable", source_long_side=64) == []
+    extra = _bars(32, 64, [(2, 6), (10, 14), (15, 19), (20, 24), (27, 31)])
+    extra_report = source_scale_report(source, extra.resize((128, 256), Image.Resampling.NEAREST))
+    assert extra_report["lanes"] == 5
+    assert source_scale_issues(extra_report, subject_class="cable", source_long_side=64)
+
+    drawing = np.zeros((128, 128, 3), np.uint8)
+    drawing[::2, ::2] = (40, 140, 30)
+    drawing[1::2, 1::2] = (20, 90, 15)
+    drawn = Image.fromarray(drawing)
+    blurred = drawn.resize((32, 32), Image.Resampling.BOX).resize((128, 128), Image.Resampling.BILINEAR)
+    lost = source_scale_report(drawn, blurred)
+    assert lost["edge_retention"] < 0.45
+    assert source_scale_issues(lost, subject_class="vegetation", source_long_side=128)
+    assert count_lanes(Image.new("RGB", (32, 32), (40, 40, 40))) == 0
 
 
 def test_detail_normal_adds_grain_and_stays_a_unit_normal():

@@ -274,6 +274,88 @@ def _coarse_delta_e(source: Image.Image, albedo: Image.Image, sigma: float) -> f
     return float(np.mean(np.linalg.norm(delta, axis=-1)))
 
 
+def _lane_profile(image: Image.Image):
+    """Mean luma across the axis that separates repeated lanes."""
+    import numpy as np
+    luma = _luma_np(image)
+    across = 1 if float(luma.mean(axis=0).std()) >= float(luma.mean(axis=1).std()) else 0
+    profile = luma.mean(axis=0 if across == 1 else 1)
+    kernel = np.array([0.25, 0.5, 0.25], dtype=np.float32)
+    return np.convolve(profile.astype(np.float32), kernel, mode="same")
+
+
+def count_lanes(image: Image.Image) -> int:
+    """Bright ridges at least a few pixels wide. Flat fields count as zero."""
+    import numpy as np
+    profile = _lane_profile(image.convert("RGB"))
+    span = float(profile.max() - profile.min())
+    if span < 8.0 or profile.size < 4:
+        return 0
+    prominence = max(12.0, 0.45 * span)
+    separation = max(3, int(profile.size) // 10)
+    found: list[int] = []
+    for index in range(1, profile.size - 1):
+        if profile[index] < profile[index - 1] or profile[index] < profile[index + 1]:
+            continue
+        left = profile[max(0, index - separation):index]
+        right = profile[index + 1:index + 1 + separation]
+        if left.size == 0 or right.size == 0:
+            continue
+        if float(profile[index] - min(float(left.min()), float(right.min()))) < prominence:
+            continue
+        if found and index - found[-1] < separation:
+            if profile[index] > profile[found[-1]]:
+                found[-1] = index
+        else:
+            found.append(index)
+    return len(found)
+
+
+def source_scale_report(source: Image.Image, albedo: Image.Image) -> dict:
+    """Structure at the source's own pixels. Invented sub-texel grain is averaged away.
+
+    ``structure_agreement`` low-passes both images, so a sharp drawing and a blur
+    of that drawing can both score as a match. This report box-filters the albedo
+    back to the source size first.
+    """
+    source_rgb = source.convert("RGB")
+    fitted = albedo.convert("RGB").resize(source_rgb.size, Image.Resampling.BOX)
+    source_edges = _band_energy(source_rgb, 1.1)
+    edges = _band_energy(fitted, 1.1)
+    return {
+        "edge_retention": round(edges / max(source_edges, 1e-3), 3),
+        "source_edges": round(source_edges, 3),
+        "edges": round(edges, 3),
+        "source_lanes": count_lanes(source_rgb),
+        "lanes": count_lanes(fitted),
+    }
+
+
+# Drawn foliage at 128 or wider. Below this, a 256 painting was replaced by a soft field.
+# Not a cohort gate. Cable strands thinner than a source texel do not move ``lanes``.
+_DRAWN_EDGE_FLOOR = 0.45
+_LANE_SUBJECTS = frozenset({"cable", "wire"})
+_DRAWN_SUBJECTS = frozenset({"grass", "vegetation"})
+
+
+def source_scale_issues(report: dict, *, subject_class: str, source_long_side: int) -> list[str]:
+    """Reasons a candidate lost source-scale structure. Empty means it held.
+
+    Lane count is the cable check: an extra full lane fails it. Edge retention is
+    the check for a drawing that was already sharp, such as the 256 swamp. A
+    softer braid on the same lanes does not fail the cable; that number moved
+    the wrong way when the middle gap was filled with thin strands.
+    """
+    issues = []
+    subject = subject_class or ""
+    retention = float(report.get("edge_retention") or 0)
+    if subject in _LANE_SUBJECTS and int(report.get("lanes") or 0) != int(report.get("source_lanes") or 0):
+        issues.append(f"lane count {report.get('lanes')} != source {report.get('source_lanes')}")
+    if subject in _DRAWN_SUBJECTS and source_long_side >= 128 and retention < _DRAWN_EDGE_FLOOR:
+        issues.append(f"source-scale edges kept {retention:.2f} of the drawing")
+    return issues
+
+
 def native_fidelity(source: Image.Image, albedo: Image.Image) -> dict:
     """Coarse structure, broad colour, and detail the source resolution cannot contain.
 

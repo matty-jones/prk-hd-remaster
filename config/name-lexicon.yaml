@@ -58,7 +58,7 @@ subjects:
     rank: 90
     subject: bundled metal cables
     enhance: fine sheath braid, individual strands, and light scuffs inside each existing lane
-    hold: the same cable lanes, their spacing, and their metal colour
+    hold: the same number of cable lanes, their spacing, the empty gaps, and their metal colour
   wire:
     class: wire
     material: metal
@@ -105,6 +105,22 @@ subjects:
     rank: 85
     subject: short grass
     enhance: distinct blades, dry tips, and small clumps of the same grass
+    hold: the original greens and the existing clumps
+  swamp:
+    class: vegetation
+    material: terrain
+    kind: organic
+    rank: 85
+    subject: wetland grass
+    enhance: finer blades in the existing clumps, in the same green
+    hold: the original greens, the dark patch, and the existing clumps
+  marsh:
+    class: vegetation
+    material: terrain
+    kind: organic
+    rank: 85
+    subject: wetland grass
+    enhance: finer blades in the existing clumps, in the same green
     hold: the original greens and the existing clumps
   dirt:
     class: dirt

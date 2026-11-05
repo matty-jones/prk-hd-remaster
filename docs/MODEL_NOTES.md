@@ -74,6 +74,14 @@ Quieting the interior raises the seam ratio even when the edge step did not grow
 
 `RVK_GroundGrain` is not this floor. In ao-vk, `TerrainGrain` returns immediately when the ground tile already has a pack normal.
 
+## Lane hold and drawn vegetation
+
+v3 and v5 used the same cable reference, 0.70 of a source texel. v5's prompt ends on "invent sharp intermediate detail", and that pass added cables in the gaps. A later sentence about the lane count did not override it, and a 0.20 radius did not either. Cable and wire prompts skip that block. They ask for braid inside the lanes already visible, then the same count and empty gaps. The radius stays 0.70.
+
+A terrain texture whose filename is not "grass" was left with an empty brief. A round green patch was then described as vertical bands and marked graphic, so the prompt treated the drawn pixels as compression. `swamp` and `marsh` are vegetation in the lexicon. Green terrain with no confident subject takes the same brief. Grass and vegetation prompts drop that band description.
+
+`source_scale_report` box-filters the albedo back to the source size. Lane count is the cable check. Edge retention is the check for a drawing that is already 128 or wider: the swamp kept about 0.03 of its source-scale edges in v3 and v5. These checks are not a cohort gate.
+
 ## What gets measured
 
 `doctor` and the run report record GPU name, driver, peak `nvidia-smi` memory, and wall time split from model inference time. Those numbers are written only after a real run. They are not estimated here.

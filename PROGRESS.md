@@ -87,6 +87,18 @@ prk-remaster reconstruct --from-run 20261031-132341-a2fa23 --run 20261103-214759
 
 `touch` a `STOP` file in the run directory to pause. Keep `--pack-name prk-hd-v05` so a resume does not replace `dist/prk-hd-v03`.
 
+## Cable lanes and swamp blades
+
+Candidate run `20261104-170508-434295` redraws only `1010004:20908` and `1010006:148`. It stops after generate. It is not packed and not installed. v5 stays the installed pack.
+
+The first cable candidate, run `20261104-170508-434295`, still has v5's lane count. v3 and v5 used the same reference radius, 0.70 of a source texel. Putting a lane sentence after "invent sharp intermediate detail" did not change the count, and tightening the radius to 0.20 did not either. The cable radius is back to 0.70. Cable and wire prompts no longer include that invent block. They end on braid inside the existing lanes, the same count, and empty gaps.
+
+The replacement cable is run `20261104-224319-8ddf5d`. It is not packed and not installed. Sheet, source / v3 / v5 / new, full 512x1024: `runs/20261104-224319-8ddf5d/gallery/1010004_20908-candidate.png`.
+
+The swamp filename is vegetation, so it uses the grass reference (0.8 px) and the blade prompt. Green terrain with no confident name takes that brief too. A grass or vegetation brief no longer describes the patch as accent bands. Swamp sheet, source / v3 / v5 / candidate, 640 center crop: `runs/20261104-170508-434295/gallery/1010006_148-candidate.png`. Swamp edge retention is 0.03 in v3, 0.02 in v5, and 0.69 in the candidate. The check flags a drawing that was blurred away. It is not applied to the rest of the cohort. A source-width lane count does not see the thin cables v5 added in the gaps, so it is not used to accept a cable.
+
+The approved cable and the vegetation redraw are pack `dist/prk-hd-v06`, run `20261104-225237-74c1ee`. It has 26 assets: cable `1010004:20908`, the approved swamp `1010006:148`, the other 12 swamps, and 12 darkgrass. It is installed ahead of `prk-hd-v05`, so those files win and the rest of v5 stays. There is no zip. A lighting resume without a key list started redrawing the whole cohort; it was stopped and those extra files were removed. Five fungus textures and athens `1010006:383` stay on v5. The fungus is moss rather than blades, and athens is grass plus a stone path. Edge retention on the new blades is 0.44 to 1.35, median 0.95. `1010006:275` is the 0.44.
+
 Distance sheet: `runs/20261103-140416-17b3ac/gallery/1010009_30643-scale.png` (source, v1, v3, regen) and `gallery/scale-report.json`. ComfyUI `output/prk-*` copies were deleted to free space, and the same sweep runs during the lighting pass. The data volume has about 28 GB free. v1, v2, v3, and `dist/prk-hd-v03` are unchanged.
 
 Resume, from the repo, with the project virtualenv active:

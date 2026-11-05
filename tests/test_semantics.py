@@ -46,8 +46,8 @@ def test_v3_prompt_asks_for_braid_and_treats_the_reference_as_layout():
     text = compile_prompt(asset, brief, cfg["family_prompts"], 512, 1024, version="v3").lower()
     assert "layout reference" in text
     assert "braid" in text
-    assert "strand" in text
-    assert "does not copy the reference blur" in text
+    assert "empty gaps" in text
+    assert "invent sharp intermediate" not in text
     assert "dock fitting" not in text
 
 
@@ -98,6 +98,53 @@ def test_v3_floor_prompt_keeps_meso_and_quiets_micro():
     assert "sharp fine grain" not in text
 
 
+def test_v3_cable_prompt_ends_on_the_lane_count():
+    cfg = _cfg()
+    image = Image.new("RGB", (32, 64), (120, 90, 40))
+    asset = {
+        "name": "dock_factory_metal_cable.png",
+        "family": "dock_factory",
+        "material_class": "metal",
+        "source_width": 32,
+        "source_height": 64,
+    }
+    brief = apply_v3_detail(build_brief(asset, image, cfg["name_lexicon"]), cfg["family_prompts"], cfg["scale_policy"])
+    text = compile_prompt(asset, brief, cfg["family_prompts"], 512, 1024, version="v3").lower()
+    assert "invent sharp intermediate" not in text
+    assert "fill the surface" not in text
+    assert "same number of lanes" in text
+    assert text.rfind("empty gaps empty") > text.rfind("tight braid")
+
+
+def test_swamp_is_vegetation_and_not_a_banded_graphic():
+    cfg = _cfg()
+    image = Image.new("RGB", (64, 64), (40, 90, 30))
+    band = Image.new("RGB", (8, 64), (80, 170, 50))
+    for left in (8, 28, 48):
+        image.paste(band, (left, 0))
+    asset = {"name": "swamp", "family": "ground:swamp", "material_class": "terrain", "source_width": 256, "source_height": 256}
+    brief = apply_v3_detail(build_brief(asset, image, cfg["name_lexicon"]), cfg["family_prompts"], cfg["scale_policy"])
+    text = compile_prompt(asset, brief, cfg["family_prompts"], 2048, 2048, version="v3").lower()
+    assert brief["subject_class"] == "vegetation"
+    assert brief["kind"] == "organic"
+    assert brief["scale_mode"] == "expressive"
+    assert "band" not in brief["appearance"]
+    assert "blade" in text
+    assert "clump" in text
+    assert "accent bands" not in text
+
+
+def test_unnamed_green_terrain_uses_the_vegetation_brief():
+    cfg = _cfg()
+    image = Image.new("RGB", (64, 64), (50, 130, 35))
+    asset = {"name": "", "family": "ground:swamp", "material_class": "terrain", "source_width": 256, "source_height": 256}
+    brief = build_brief(asset, image, cfg["name_lexicon"])
+    assert brief["subject_class"] == "vegetation"
+    assert brief["kind"] == "organic"
+    assert brief["name_confidence"] >= 0.45
+    assert "accent bands" not in brief["hold"]
+
+
 def test_v3_cable_stays_expressive_when_the_class_is_known():
     cfg = _cfg()
     image = Image.new("RGB", (32, 64), (120, 90, 40))
@@ -112,7 +159,8 @@ def test_v3_cable_stays_expressive_when_the_class_is_known():
     text = compile_prompt(asset, brief, cfg["family_prompts"], 512, 1024, version="v3").lower()
     assert brief["scale_mode"] == "expressive"
     assert "braid" in text
-    assert "does not copy the reference blur" in text
+    assert "empty gaps" in text
+    assert "invent sharp intermediate" not in text
 
 
 def test_empty_filename_does_not_invent_a_subject():

@@ -243,6 +243,20 @@ def build_brief(asset: dict, image: Image.Image, lexicon: dict) -> dict:
         enhance = "distinct blades, dry tips, and small clumps of the same grass"
         hold = "the original green and the boundary between grass and any bare soil"
         name_confidence = max(name_confidence, 0.55)
+    elif reading["vegetation"] and category == "terrain" and name_confidence < 0.45:
+        # A round grass patch measures as bands. Those pixels are the drawing.
+        subject = "wetland grass"
+        subject_class = "vegetation"
+        material = "terrain"
+        kind = "organic"
+        enhance = "finer blades in the existing clumps, in the same green"
+        hold = "the original greens and the existing clumps"
+        name_confidence = max(name_confidence, 0.55)
+    if subject_class in {"grass", "vegetation"} and reading.get("band_count"):
+        reading = dict(reading)
+        reading["band_count"] = 0
+        reading["band_axis"] = ""
+        reading["band_hues"] = []
     effective = material or category or "unknown"
     if effective not in {"terrain", "stone", "architecture", "interior", "metal"}:
         effective = category or "unknown"
@@ -288,6 +302,7 @@ def sanitize_caption(text: str, limit: int = 180) -> str:
 
 
 _GRASS_WORDS = ("grass", "vegetation", "moss", "lawn")
+_LANE_CLASSES = frozenset({"cable", "wire"})
 _NOT_GRASS = ("stone", "wall", "metal", "brick", "concrete", "pipe", "wood", "tile")
 
 
@@ -394,9 +409,15 @@ def compile_prompt(asset: dict, brief: dict, prompts: dict, target_w: int, targe
     text = (shared + "\n" + body.strip()).format(**fields)
     if version == "v3":
         mode = brief.get("scale_mode") or "expressive"
-        extra = (block.get(mode) or "").strip()
-        if extra:
-            text += "\n" + extra.format(**fields)
+        # "Invent intermediate detail" is what added cables in the gaps. Lanes do not get that block.
+        if mode != "restrained" and str(brief.get("subject_class") or "") in _LANE_CLASSES:
+            lane = (block.get("lane") or "").strip()
+            if lane:
+                text += "\n" + lane.format(**fields)
+        else:
+            extra = (block.get(mode) or "").strip()
+            if extra:
+                text += "\n" + extra.format(**fields)
     text += (
         f"\nSource size {asset.get('source_width')}x{asset.get('source_height')}, "
         f"target {target_w}x{target_h}, aspect preserved."
