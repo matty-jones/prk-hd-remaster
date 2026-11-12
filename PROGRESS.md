@@ -2,6 +2,16 @@
 
 Save point for the PRK HD remaster factory. Updated as the system is built and run.
 
+## Status
+
+Development stopped on 12 November 2026. Spiritech replaces the PRK client and ao-vk, including textures and meshes. Do not start another remaster run from this repo.
+
+The client is on the game's own textures again. `randy-vk/packs/order.txt` is empty, `prk-hd-v07` is not installed, and `cd_image/rdb.db` was not modified (still the 23 October 2026 file, 2,148,802,560 bytes). `randy-vk/fx` and `randy-vk/portals` are unchanged.
+
+The only pack kept is `/mnt/m/prk-hd-remaster/dist/prk-hd-v07`: 4,673 files, 25,092,150,432 bytes, including `pack-manifest.json`. It is the v05 cohort with the v06 cable and vegetation maps merged in. It is not in git. Every file's SHA-256 matched a manifest taken before the older copies were deleted. Alias maps inside that folder still share inodes with each other; nothing else on the work volume links to them.
+
+Removed: `dist/prk-hd-v01` through `dist/prk-hd-v05`, every directory under `runs/`, and the client `order.txt` backups. `dist/prk-hd-v06` was already gone. ComfyUI, the model weights, the catalogue cache, and `registry.sqlite` are still on the work volume. After the delete the volume had about 144 GB free.
+
 ## Environment
 
 - Repo: `/home/blasky/Games/prk-hd-remaster`
@@ -97,7 +107,7 @@ The replacement cable is run `20261104-224319-8ddf5d`. It is not packed and not 
 
 The swamp filename is vegetation, so it uses the grass reference (0.8 px) and the blade prompt. Green terrain with no confident name takes that brief too. A grass or vegetation brief no longer describes the patch as accent bands. Swamp sheet, source / v3 / v5 / candidate, 640 center crop: `runs/20261104-170508-434295/gallery/1010006_148-candidate.png`. Swamp edge retention is 0.03 in v3, 0.02 in v5, and 0.69 in the candidate. The check flags a drawing that was blurred away. It is not applied to the rest of the cohort. A source-width lane count does not see the thin cables v5 added in the gaps, so it is not used to accept a cable.
 
-The approved cable and the vegetation redraw are pack `dist/prk-hd-v06`, run `20261104-225237-74c1ee`. It has 26 assets: cable `1010004:20908`, the approved swamp `1010006:148`, the other 12 swamps, and 12 darkgrass. It is installed ahead of `prk-hd-v05`, so those files win and the rest of v5 stays. There is no zip. A lighting resume without a key list started redrawing the whole cohort; it was stopped and those extra files were removed. Five fungus textures and athens `1010006:383` stay on v5. The fungus is moss rather than blades, and athens is grass plus a stone path. Edge retention on the new blades is 0.44 to 1.35, median 0.95. `1010006:275` is the 0.44.
+The approved cable and the vegetation redraw were pack `dist/prk-hd-v06`, run `20261104-225237-74c1ee`: cable `1010004:20908`, the approved swamp `1010006:148`, the other 12 swamps, and 12 darkgrass. That overlay was merged into `dist/prk-hd-v07`. Unchanged files were hardlinks of v05. The 104 replaced maps were the v06 files. The client then had only `prk-hd-v07` in `order.txt`. `dist/prk-hd-v05` was the previous pack; its extra data was the old copies of those 26 textures. `dist/prk-hd-v06` was removed after the hardlink. The 12 November wind-down removed v05 and the client install; see Status. There is no zip. A lighting resume without a key list started redrawing the whole cohort; it was stopped and those extra files were removed. Five fungus textures and athens `1010006:383` stay on v5. The fungus is moss rather than blades, and athens is grass plus a stone path. Edge retention on the new blades is 0.44 to 1.35, median 0.95. `1010006:275` is the 0.44.
 
 Distance sheet: `runs/20261103-140416-17b3ac/gallery/1010009_30643-scale.png` (source, v1, v3, regen) and `gallery/scale-report.json`. ComfyUI `output/prk-*` copies were deleted to free space, and the same sweep runs during the lighting pass. The data volume has about 28 GB free. v1, v2, v3, and `dist/prk-hd-v03` are unchanged.
 
